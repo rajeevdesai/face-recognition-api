@@ -24,6 +24,11 @@ export const ARCFACE_DST: [number, number][] = [
  * Iris indices (478-landmark model): 468 = left iris center, 473 = right iris center.
  * Eye-corner fallback (468-landmark model): left eye 33/133, right eye 263/362.
  * Indices 1, 61, 291 are stable across both model variants.
+ *
+ * Verified 2026-06-02 against the float16 face_landmarker.task: detect emits 478
+ * landmarks, and these five points fit ARCFACE_DST at ~1-2px RMS — i.e. the
+ * image-side pairing is correct, with no left/right swap. (468 lands at image-left,
+ * matching ARCFACE_DST[0]; 473 at image-right.)
  */
 export function extractFivePoints(
   landmarks: NormalizedLandmark[],

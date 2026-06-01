@@ -234,7 +234,7 @@ Integration tests require browser APIs and are auto-skipped in Node. Run them vi
 
 1. **Recognition model extractability** *(verified)* — the downloaded `mobilefacenet.onnx` loads as a plain, unencrypted ONNX graph (input `input`, output `embedding` `[1,256]`). No fallback needed for the default weights.
 2. **Preprocessing layout** *(verified)* — confirmed NCHW `[1,3,112,112]`: inference on that shape succeeds and yields the expected 256-D embedding (an HWC graph would reject it). A consumer-supplied model with a different layout still needs its own check.
-3. **Landmark indices** — iris indices 468/473 are verified against the 478-landmark FaceLandmarker. Confirm against the specific `.task` bundle you download.
+3. **Landmark indices** *(verified 2026-06-02)* — the float16 `face_landmarker.task` emits 478 landmarks, and the five extracted points (iris 468/473, nose 1, mouth 61/291) fit `ARCFACE_DST` at ~1-2px RMS, confirming correct image-side pairing (no left/right swap). Re-confirm if you swap in a different `.task` bundle.
 4. **Threshold** — the default 0.5 is uncalibrated. Measure on your own data.
 5. **Test fixtures** — use CC0 / self-provided images, never scraped faces.
 6. **Liveness is not a complete spoof defense** *(validated 2026-06-02)* — with correct `[0,255]` preprocessing, MiniFASNetV2 reliably rejects screen/video replay (replay class ~0.9999) and passes live faces (~0.88–0.96). Print is the weak spot: usually rejected, but one capture false-accepted (scored 0.882 live), and the live/print score ranges overlap — a single threshold can't cleanly separate them. Hardening path: ensemble the second minivision model (MiniFASNetV1SE, 4.0 crop) and sum the softmaxes. `livenessThreshold` (default 0.5) is uncalibrated.
