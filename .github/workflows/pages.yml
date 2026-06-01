@@ -1,0 +1,57 @@
+name: Deploy demo to GitHub Pages
+
+# Builds the library, fetches the model weights, and publishes the webcam demo
+# to GitHub Pages. dist/ and the model files are gitignored, so they are produced
+# in CI rather than served from the repo. Requires Pages to be enabled with
+# Source = "GitHub Actions" (Settings → Pages).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deploy; don't cancel an in-progress run.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build library
+        run: npm run build
+      - name: Download model weights
+        run: bash models/download.sh
+      - name: Assemble site (relative paths for the project Pages base)
+        run: |
+          mkdir -p _site/dist _site/models
+          cp demo/index.html _site/index.html
+          cp demo/calibrate.html _site/calibrate.html
+          cp -r dist/. _site/dist/
+          cp models/face_landmarker.task models/mobilefacenet.onnx models/minifasnet_v2.onnx _site/models/
+          # demo uses absolute /dist /models (works locally from repo root); rewrite to
+          # relative for the project Pages base. Anchored on the quote char so jsDelivr
+          # CDN URLs (…onnxruntime-web@1.20.0/dist/…) are left intact.
+          sed -i "s#'/dist/#'./dist/#g; s#'/models/#'./models/#g; s#\"/models/#\"./models/#g" _site/index.html _site/calibrate.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

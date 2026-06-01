@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `demo/calibrate.html` — in-browser threshold calibration over a labelled
   (`identity/image.jpg`) folder: same/different distance distributions, EER and
   best-accuracy thresholds, FAR/FRR. Works with a BYO recognition model.
+- GitHub Pages deploy workflow (`.github/workflows/pages.yml`) that builds the
+  library, fetches the model weights, and publishes the webcam demo. "Try the
+  live demo" link in the README.
 
 ### Changed
 

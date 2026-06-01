@@ -3,10 +3,13 @@
 [![CI](https://github.com/rajeevdesai/face-recognition-api/actions/workflows/ci.yml/badge.svg)](https://github.com/rajeevdesai/face-recognition-api/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@rajeevdesai/face-recognition)](https://www.npmjs.com/package/@rajeevdesai/face-recognition)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![live demo](https://img.shields.io/badge/demo-try%20me-7cf?logo=github)](https://rajeevdesai.github.io/face-recognition-api/)
 
 Browser-only **1:1 face verification** library. Custom pipeline — no wrapper libraries, fully auditable, open-sourceable.
 
 Answers one question: *"Is the face in image B the same person as the face in image A?"* — entirely client-side, with no biometric data leaving the browser.
+
+**▶ [Try the live demo](https://rajeevdesai.github.io/face-recognition-api/)** — webcam capture, runs entirely in your browser; nothing is uploaded.
 
 ```
 MediaPipe FaceLandmarker → Umeyama alignment → MobileFaceNet ONNX → cosine distance
