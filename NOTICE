@@ -1,0 +1,30 @@
+face-recognition-api
+Copyright (c) 2026 Rajeev Desai
+Licensed under the MIT License (see LICENSE).
+
+---
+
+This software includes or downloads the following third-party components:
+
+1. MediaPipe FaceLandmarker
+   Source:  https://github.com/google-ai-edge/mediapipe
+   License: Apache License 2.0
+   Used for: face detection and 478-point facial landmark extraction
+
+2. facex_nano (facex-engine/facex, tag facex-nano-1.0)
+   Source:  https://github.com/facex-engine/facex/releases/tag/facex-nano-1.0
+   License: Apache License 2.0 (code and weights)
+   Used for: 256-D face embedding (NCHW [1,3,112,112], ArcFace-trained, LFW 95.62%)
+   Data caveat: Weights were trained on MS1M-RefineV2. The dataset itself
+   has restricted usage terms. The weights are independently Apache-2.0 licensed.
+   Consumers should evaluate whether the data-lineage restriction affects their
+   specific use case.
+
+3. onnxruntime-web
+   Source:  https://github.com/microsoft/onnxruntime
+   License: MIT License
+   Used for: WASM-based ONNX model inference in the browser
+
+Model weights are NOT bundled in this package. They are downloaded separately
+via models/download.sh. Consumers are responsible for compliance with the
+applicable model licenses.

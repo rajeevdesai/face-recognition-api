@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Face Recognition</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm",
+      "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.0/dist/ort.min.mjs"
+    }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: monospace;
+      background: #0d0d0d;
+      color: #ddd;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+      gap: 20px;
+    }
+
+    h1 { color: #7cf; font-size: 18px; }
+    #status { color: #fa0; font-size: 12px; }
+
+    .cards {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      max-width: 760px;
+    }
+
+    .card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+    }
+
+    .card-view {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-view video,
+    .card-view img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-view video { transform: scaleX(-1); }
+
+    .card-view img { display: none; }
+    .card-view.captured img { display: block; }
+    .card-view.captured video { display: none; }
+
+    .captured-badge {
+      display: none;
+      position: absolute;
+      bottom: 8px; left: 8px;
+      background: rgba(0,0,0,0.65);
+      color: #4cf;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+    }
+    .card-view.captured .captured-badge { display: block; }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 13px;
+      background: #1a1a1a;
+      color: #bbb;
+      border: 1px solid #2e2e2e;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    button:hover:not(:disabled) { border-color: #7cf; color: #7cf; }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    button.remove { background: #1a0000; color: #f55; border-color: #4a0000; }
+    button.remove:hover { border-color: #f55; color: #f88; }
+
+    #btn-compare {
+      width: 100%;
+      max-width: 760px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      background: #7cf;
+      color: #0d0d0d;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #btn-compare:hover:not(:disabled) { background: #5ab; }
+    #btn-compare:disabled { background: #222; color: #555; cursor: not-allowed; }
+
+    /* Result */
+    #result {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #result[hidden] { display: none; }
+
+    .decision-value {
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .match-true  { background: #0a2a0a; color: #4f4; }
+    .match-false { background: #2a0a0a; color: #f44; }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #1e1e1e;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .result-cell { background: #111; padding: 12px; }
+    .cell-label { font-size: 10px; text-transform: uppercase; color: #555; margin-bottom: 4px; }
+    .cell-value { font-size: 15px; }
+
+    .flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .flag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: #1e1000;
+      color: #fa0;
+      border: 1px solid #3e2800;
+    }
+    .flag.none { background: #0a1a0a; color: #4a4; border-color: #1a3a1a; }
+
+    .json-wrap {
+      position: relative;
+    }
+    .json-wrap pre {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 11px;
+      color: #888;
+      overflow-x: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: auto;
+      padding: 3px 8px;
+      font-size: 11px;
+      background: #1a1a1a;
+      color: #666;
+      border: 1px solid #2e2e2e;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .copy-btn:hover { color: #7cf; border-color: #7cf; }
+    .copy-btn.copied { color: #4f4; border-color: #4f4; }
+  </style>
+</head>
+<body>
+  <h1>Face Recognition</h1>
+  <div id="status">Loading models…</div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Baseline</div>
+      <div class="card-view" id="view-baseline">
+        <video id="video-baseline" autoplay playsinline muted></video>
+        <img id="img-baseline" alt="baseline capture" />
+        <span class="captured-badge">captured</span>
+      </div>
+      <button id="btn-baseline" disabled>Capture Baseline</button>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Current</div>
+      <div class="card-view" id="view-current">
+        <video id="video-current" autoplay playsinline muted></video>
+        <img id="img-current" alt="current capture" />
+        <span class="captured-badge">captured</span>
+      </div>
+      <button id="btn-current" disabled>Capture Current</button>
+    </div>
+  </div>
+
+  <button id="btn-compare" disabled>Compare Faces</button>
+
+  <div id="result" hidden>
+    <div class="result-grid">
+      <div class="result-cell" id="result-banner">
+        <div class="cell-label">Decision</div>
+        <div class="decision-value" id="res-decision"></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-label">Flags</div>
+        <div class="flags" id="res-flags"></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-label">Confidence</div>
+        <div class="cell-value" id="res-confidence"></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-label">Cosine Distance</div>
+        <div class="cell-value" id="res-distance"></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-label">Threshold</div>
+        <div class="cell-value" id="res-threshold"></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-label">Faces (baseline / current)</div>
+        <div class="cell-value" id="res-faces"></div>
+      </div>
+      <div class="result-cell">
+        <div class="cell-label">Liveness Score</div>
+        <div class="cell-value" id="res-liveness"></div>
+      </div>
+    </div>
+    <div class="json-wrap">
+      <button class="copy-btn" id="btn-copy-json">copy</button>
+      <pre id="res-json"></pre>
+    </div>
+  </div>
+
+  <script type="module">
+    import { loadModels, compareFaces } from '/dist/face-recognition.js';
+
+    const status     = document.getElementById('status');
+    const btnBase    = document.getElementById('btn-baseline');
+    const btnCurrent = document.getElementById('btn-current');
+    const btnCompare = document.getElementById('btn-compare');
+
+    document.getElementById('btn-copy-json').addEventListener('click', function() {
+      navigator.clipboard.writeText(document.getElementById('res-json').textContent).then(() => {
+        this.textContent = 'copied!';
+        this.classList.add('copied');
+        setTimeout(() => { this.textContent = 'copy'; this.classList.remove('copied'); }, 1500);
+      });
+    });
+
+    const videoBase    = document.getElementById('video-baseline');
+    const videoCurrent = document.getElementById('video-current');
+    const imgBase      = document.getElementById('img-baseline');
+    const imgCurrent   = document.getElementById('img-current');
+
+    let baselineUrl = null;
+    let currentUrl  = null;
+    let stream      = null;
+
+    // Start webcam — same stream into both video elements
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+      .then(s => {
+        stream = s;
+        videoBase.srcObject    = s;
+        videoCurrent.srcObject = s;
+        btnBase.disabled    = false;
+        btnCurrent.disabled = false;
+      })
+      .catch(err => { status.textContent = `Camera error: ${err.message}`; });
+
+    // Load models
+    loadModels({
+      faceLandmarkerPath:   '/models/face_landmarker.task',
+      recognitionModelPath: '/models/mobilefacenet.onnx',
+      livenessModelPath:    '/models/minifasnet_v2.onnx',
+    }).then(() => {
+      status.textContent = 'Ready. Capture baseline and current, then compare.';
+    }).catch(err => {
+      status.textContent = `Model load failed: ${err.message}`;
+    });
+
+    function captureFrom(videoEl) {
+      const canvas = document.createElement('canvas');
+      canvas.width  = videoEl.videoWidth  || 640;
+      canvas.height = videoEl.videoHeight || 480;
+      canvas.getContext('2d').drawImage(videoEl, 0, 0);
+      return new Promise(resolve =>
+        canvas.toBlob(blob => resolve(URL.createObjectURL(blob)), 'image/jpeg', 0.92)
+      );
+    }
+
+    function updateCompareBtn() {
+      btnCompare.disabled = !(baselineUrl && currentUrl);
+    }
+
+    function removeCapture(which) {
+      document.getElementById('result').hidden = true;
+      if (which === 'baseline') {
+        if (baselineUrl) { URL.revokeObjectURL(baselineUrl); baselineUrl = null; }
+        imgBase.src = '';
+        document.getElementById('view-baseline').classList.remove('captured');
+        btnBase.textContent = 'Capture Baseline';
+        btnBase.classList.remove('remove');
+      } else {
+        if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
+        imgCurrent.src = '';
+        document.getElementById('view-current').classList.remove('captured');
+        btnCurrent.textContent = 'Capture Current';
+        btnCurrent.classList.remove('remove');
+      }
+      updateCompareBtn();
+    }
+
+    btnBase.addEventListener('click', async () => {
+      if (baselineUrl) { removeCapture('baseline'); return; }
+      document.getElementById('result').hidden = true;
+      baselineUrl = await captureFrom(videoBase);
+      imgBase.src = baselineUrl;
+      document.getElementById('view-baseline').classList.add('captured');
+      btnBase.textContent = '✕ Remove';
+      btnBase.classList.add('remove');
+      updateCompareBtn();
+    });
+
+    btnCurrent.addEventListener('click', async () => {
+      if (currentUrl) { removeCapture('current'); return; }
+      document.getElementById('result').hidden = true;
+      currentUrl = await captureFrom(videoCurrent);
+      imgCurrent.src = currentUrl;
+      document.getElementById('view-current').classList.add('captured');
+      btnCurrent.textContent = '✕ Remove';
+      btnCurrent.classList.add('remove');
+      updateCompareBtn();
+    });
+
+    btnCompare.addEventListener('click', async () => {
+      btnCompare.disabled = true;
+      status.textContent = 'Comparing…';
+      document.getElementById('result').hidden = true;
+
+      try {
+        const r = await compareFaces(baselineUrl, currentUrl);
+
+        const banner = document.getElementById('result-banner');
+        banner.className = 'result-cell ' + (r.match ? 'match-true' : 'match-false');
+        document.getElementById('res-decision').textContent = r.match ? '✓ Match' : '✗ Mismatch';
+
+        document.getElementById('res-confidence').textContent = (r.confidence * 100).toFixed(1) + '%';
+        document.getElementById('res-distance').textContent   = r.details.cosineDistance.toFixed(4);
+        document.getElementById('res-threshold').textContent  = r.details.threshold.toFixed(4);
+        document.getElementById('res-liveness').textContent   =
+          r.details.livenessScore != null ? r.details.livenessScore.toFixed(4) : '—';
+        document.getElementById('res-faces').textContent      =
+          `${r.details.baselineFacesFound} / ${r.details.currentFacesFound}`;
+
+        const flagsDiv = document.getElementById('res-flags');
+        flagsDiv.innerHTML = r.flags.length
+          ? r.flags.map(f => `<span class="flag">${f}</span>`).join('')
+          : '<span class="flag none">none</span>';
+
+        document.getElementById('res-json').textContent = JSON.stringify(r, null, 2);
+        document.getElementById('result').hidden = false;
+        status.textContent = '';
+      } catch (err) {
+        status.textContent = `Error: ${err.message}`;
+        console.error(err);
+      } finally {
+        updateCompareBtn();
+      }
+    });
+  </script>
+</body>
+</html>
