@@ -5,3 +5,7 @@ models/*.task
 models/*.bin
 *.local
 .DS_Store
+
+# Test fixtures are user-supplied and consented — never commit faces (public repo)
+tests/fixtures/*
+!tests/fixtures/.gitkeep

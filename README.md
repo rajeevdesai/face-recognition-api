@@ -269,7 +269,7 @@ npm install
 npm run demo   # builds, then serves at http://localhost:5299
 ```
 
-Open `demo/index.html` and upload images from `tests/fixtures/` to exercise the full pipeline end-to-end. For threshold calibration, open `demo/calibrate.html` — see [Threshold & calibration](#threshold--calibration).
+Open `demo/index.html`, capture a **baseline** and a **current** frame from your webcam, and hit Compare to exercise the full pipeline end-to-end. For threshold calibration, open `demo/calibrate.html` — see [Threshold & calibration](#threshold--calibration).
 
 ## Tests
 
