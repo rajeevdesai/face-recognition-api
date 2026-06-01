@@ -30,7 +30,7 @@ describe.skipIf(BROWSER_ONLY)('integration — real pipeline', () => {
       'tests/fixtures/person_a_2.jpg',
     );
     expect(result.match).toBe(true);
-    expect(result.details.cosineDistance).toBeLessThan(0.5);
+    expect(result.details.distance).toBeLessThan(0.5);
   });
 
   it('different people → identity_mismatch', async () => {

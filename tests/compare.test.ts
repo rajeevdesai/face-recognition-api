@@ -133,7 +133,7 @@ describe('flag: multiple_faces', () => {
 describe('flag: identity_mismatch', () => {
   it('sets identity_mismatch when cosine distance > threshold', async () => {
     mockDetect.mockReturnValueOnce([makeFace()]).mockReturnValueOnce([makeFace()]);
-    // cosineDistance mock: |a[0] - b[0]| = |0 - 0.9| = 0.9 > DEFAULT_THRESHOLD
+    // distance mock: |a[0] - b[0]| = |0 - 0.9| = 0.9 > DEFAULT_THRESHOLD
     mockEmbed.mockResolvedValueOnce(makeEmb(0)).mockResolvedValueOnce(makeEmb(0.9));
     const result: CompareResult = await compareFaces(dummyImageData(), dummyImageData());
     expect(result.match).toBe(false);
