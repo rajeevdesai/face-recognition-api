@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Face Recognition — Threshold Calibration</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/+esm",
+      "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.0/dist/ort.min.mjs"
+    }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; background: #0d0d0d; color: #ddd; padding: 28px; max-width: 860px; margin: 0 auto; line-height: 1.5; }
+    h1 { color: #7cf; font-size: 18px; margin-bottom: 4px; }
+    p.sub { color: #777; font-size: 12px; margin-bottom: 20px; }
+    fieldset { border: 1px solid #222; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+    legend { color: #7cf; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; padding: 0 6px; }
+    label { display: block; font-size: 11px; color: #888; margin: 10px 0 3px; }
+    input[type=text], input[type=number], textarea {
+      width: 100%; background: #111; color: #ddd; border: 1px solid #2a2a2a;
+      border-radius: 5px; padding: 7px 9px; font-family: monospace; font-size: 12px;
+    }
+    textarea { min-height: 58px; resize: vertical; }
+    .row { display: flex; gap: 14px; }
+    .row > div { flex: 1; }
+    button {
+      margin-top: 14px; padding: 11px 16px; font-family: monospace; font-size: 13px; font-weight: bold;
+      background: #7cf; color: #0d0d0d; border: none; border-radius: 6px; cursor: pointer;
+    }
+    button:disabled { background: #222; color: #555; cursor: not-allowed; }
+    #status { color: #fa0; font-size: 12px; margin: 14px 0; min-height: 16px; }
+    #out { display: none; }
+    #out.show { display: block; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #1e1e1e; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+    .cell { background: #111; padding: 11px 13px; }
+    .cell .k { font-size: 10px; text-transform: uppercase; color: #555; }
+    .cell .v { font-size: 15px; color: #ddd; }
+    .cell .v.good { color: #4f4; }
+    .hist { margin: 6px 0 16px; }
+    .hist .bar { display: flex; align-items: center; height: 9px; margin: 1px 0; }
+    .hist .same { background: #2f6; }
+    .hist .diff { background: #f55; }
+    .legend { font-size: 11px; margin-bottom: 8px; }
+    .legend .same { color: #2f6; } .legend .diff { color: #f55; }
+    pre { background: #111; border: 1px solid #1e1e1e; border-radius: 8px; padding: 12px; font-size: 11px; color: #9a9; overflow-x: auto; white-space: pre-wrap; }
+    code { color: #7cf; }
+  </style>
+</head>
+<body>
+  <h1>Threshold Calibration</h1>
+  <p class="sub">
+    Runs the pipeline over a labelled image set, measures same-person vs different-person
+    distances, and suggests a threshold. Images are processed locally — nothing is uploaded.
+  </p>
+
+  <fieldset>
+    <legend>Models</legend>
+    <label>faceLandmarkerPath</label>
+    <input type="text" id="landmarkerPath" value="/models/face_landmarker.task" />
+    <label>recognitionModelPath</label>
+    <input type="text" id="recognitionPath" value="/models/mobilefacenet.onnx" />
+    <label>recognition config (JSON, optional — e.g. {"inputSize":160,"channelOrder":"BGR","metric":"euclidean"})</label>
+    <textarea id="recognitionCfg" placeholder="{}"></textarea>
+    <p class="sub" style="margin:8px 0 0">To change the model after a run, reload the page (models are cached as singletons).</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Dataset</legend>
+    <label>Pick a folder laid out as <code>identity/image.jpg</code> (one sub-folder per person)</label>
+    <input type="file" id="folder" webkitdirectory multiple />
+    <div class="row">
+      <div>
+        <label>max same-person pairs / identity</label>
+        <input type="number" id="maxSame" value="6" min="1" />
+      </div>
+      <div>
+        <label>max different-person pairs (total)</label>
+        <input type="number" id="maxDiff" value="400" min="1" />
+      </div>
+    </div>
+    <label style="margin-top:12px"><input type="checkbox" id="oneFace" checked style="width:auto" /> skip images that don't contain exactly one face</label>
+    <button id="run" disabled>Run calibration</button>
+  </fieldset>
+
+  <div id="status">Loading models…</div>
+
+  <div id="out">
+    <div class="grid" id="stats"></div>
+    <div class="legend"><span class="same">▮ same-person</span> &nbsp; <span class="diff">▮ different-person</span> &nbsp;(distance →)</div>
+    <div class="hist" id="hist"></div>
+    <pre id="summary"></pre>
+  </div>
+
+  <script type="module">
+    import { loadModels, compareFaces } from '/dist/face-recognition.js';
+
+    const $ = (id) => document.getElementById(id);
+    const status = $('status');
+    const runBtn = $('run');
+
+    let files = [];
+
+    $('folder').addEventListener('change', (e) => {
+      files = [...e.target.files].filter((f) => /\.(jpe?g|png|webp|bmp)$/i.test(f.name));
+      const ids = new Set(files.map(identityOf));
+      status.textContent = `${files.length} images across ${ids.size} identities selected.`;
+      runBtn.disabled = files.length === 0;
+    });
+
+    // identity = the immediate parent folder name within the picked directory
+    function identityOf(file) {
+      const parts = file.webkitRelativePath.split('/');
+      return parts.length >= 2 ? parts[parts.length - 2] : '_root';
+    }
+
+    function groupByIdentity(fs) {
+      const m = new Map();
+      for (const f of fs) {
+        const id = identityOf(f);
+        if (!m.has(id)) m.set(id, []);
+        m.get(id).push(f);
+      }
+      return m;
+    }
+
+    function* samePairs(groups, capPerId) {
+      for (const fs of groups.values()) {
+        let n = 0;
+        for (let i = 0; i < fs.length && n < capPerId; i++)
+          for (let j = i + 1; j < fs.length && n < capPerId; j++, n++) yield [fs[i], fs[j]];
+      }
+    }
+
+    function diffPairs(groups, cap) {
+      const ids = [...groups.keys()];
+      const out = [];
+      let guard = cap * 50;
+      while (out.length < cap && guard-- > 0) {
+        const a = ids[(Math.random() * ids.length) | 0];
+        const b = ids[(Math.random() * ids.length) | 0];
+        if (a === b) continue;
+        const fa = groups.get(a)[(Math.random() * groups.get(a).length) | 0];
+        const fb = groups.get(b)[(Math.random() * groups.get(b).length) | 0];
+        out.push([fa, fb]);
+      }
+      return out;
+    }
+
+    // ---- distance collection -------------------------------------------------
+    async function distanceOf(fileA, fileB, requireOneFace) {
+      const ua = URL.createObjectURL(fileA);
+      const ub = URL.createObjectURL(fileB);
+      try {
+        const r = await compareFaces(ua, ub, { checkLiveness: false, threshold: 2 });
+        const d = r.details;
+        if (requireOneFace && (d.baselineFacesFound !== 1 || d.currentFacesFound !== 1)) return null;
+        if (d.baselineFacesFound === 0 || d.currentFacesFound === 0) return null;
+        return d.distance;
+      } finally {
+        URL.revokeObjectURL(ua);
+        URL.revokeObjectURL(ub);
+      }
+    }
+
+    async function collect(pairs, requireOneFace, label) {
+      const out = [];
+      for (let i = 0; i < pairs.length; i++) {
+        const d = await distanceOf(pairs[i][0], pairs[i][1], requireOneFace);
+        if (d !== null && Number.isFinite(d)) out.push(d);
+        if (i % 10 === 0) status.textContent = `Measuring ${label} pairs… ${i + 1}/${pairs.length}`;
+      }
+      return out;
+    }
+
+    // ---- threshold analysis --------------------------------------------------
+    const mean = (a) => a.reduce((s, x) => s + x, 0) / (a.length || 1);
+    const std = (a) => { const m = mean(a); return Math.sqrt(mean(a.map((x) => (x - m) ** 2))); };
+
+    function analyze(same, diff) {
+      const all = [...same, ...diff];
+      const lo = Math.min(...all), hi = Math.max(...all);
+      let eer = null, best = null;
+      for (let s = 0; s <= 200; s++) {
+        const t = lo + ((hi - lo) * s) / 200;
+        const frr = same.filter((d) => d >= t).length / same.length; // same rejected
+        const far = diff.filter((d) => d < t).length / diff.length;   // diff accepted
+        const acc = 1 - (same.filter((d) => d >= t).length + diff.filter((d) => d < t).length) / all.length;
+        if (eer === null || Math.abs(far - frr) < Math.abs(eer.far - eer.frr)) eer = { t, far, frr };
+        if (best === null || acc > best.acc) best = { t, acc, far, frr };
+      }
+      return { lo, hi, eer, best };
+    }
+
+    function renderHist(same, diff) {
+      const BINS = 40, lo = 0, hi = 2, w = (hi - lo) / BINS;
+      const bin = (arr) => { const b = Array(BINS).fill(0); for (const d of arr) b[Math.min(BINS - 1, Math.max(0, ((d - lo) / w) | 0))]++; return b; };
+      const bs = bin(same), bd = bin(diff);
+      const maxS = Math.max(...bs, 1), maxD = Math.max(...bd, 1);
+      const rows = [];
+      for (let i = 0; i < BINS; i++) {
+        rows.push(`<div class="bar"><div class="same" style="width:${(bs[i] / maxS) * 50}%"></div><div class="diff" style="width:${(bd[i] / maxD) * 50}%"></div></div>`);
+      }
+      $('hist').innerHTML = rows.join('');
+    }
+
+    function cell(k, v, good) { return `<div class="cell"><div class="k">${k}</div><div class="v ${good ? 'good' : ''}">${v}</div></div>`; }
+
+    // ---- run -----------------------------------------------------------------
+    runBtn.addEventListener('click', async () => {
+      runBtn.disabled = true;
+      $('out').classList.remove('show');
+      try {
+        let cfg = {};
+        const raw = $('recognitionCfg').value.trim();
+        if (raw) cfg = JSON.parse(raw);
+
+        status.textContent = 'Loading models…';
+        await loadModels({
+          faceLandmarkerPath: $('landmarkerPath').value,
+          recognitionModelPath: $('recognitionPath').value,
+          recognition: cfg,
+          // no livenessModelPath → liveness disabled for calibration
+        });
+
+        const groups = groupByIdentity(files);
+        const requireOneFace = $('oneFace').checked;
+        const sp = [...samePairs(groups, +$('maxSame').value)];
+        const dp = diffPairs(groups, +$('maxDiff').value);
+
+        const same = await collect(sp, requireOneFace, 'same-person');
+        const diff = await collect(dp, requireOneFace, 'different-person');
+
+        if (same.length < 2 || diff.length < 2) {
+          status.textContent = `Not enough usable pairs (same=${same.length}, diff=${diff.length}). Need ≥2 of each.`;
+          runBtn.disabled = false;
+          return;
+        }
+
+        const a = analyze(same, diff);
+        renderHist(same, diff);
+
+        $('stats').innerHTML = [
+          cell('same pairs', same.length),
+          cell('diff pairs', diff.length),
+          cell('same mean ± std', `${mean(same).toFixed(3)} ± ${std(same).toFixed(3)}`),
+          cell('diff mean ± std', `${mean(diff).toFixed(3)} ± ${std(diff).toFixed(3)}`),
+          cell('EER threshold', a.eer.t.toFixed(4), true),
+          cell('EER (≈FAR≈FRR)', `${(((a.eer.far + a.eer.frr) / 2) * 100).toFixed(2)}%`),
+          cell('best-accuracy threshold', a.best.t.toFixed(4), true),
+          cell('best accuracy', `${(a.best.acc * 100).toFixed(2)}%`),
+        ].join('');
+
+        const summary = [
+          `recognitionModelPath: ${$('recognitionPath').value}`,
+          `recognition config:   ${raw || '(defaults)'}`,
+          ``,
+          `same-person pairs: ${same.length}   mean ${mean(same).toFixed(4)}  std ${std(same).toFixed(4)}  range [${Math.min(...same).toFixed(3)}, ${Math.max(...same).toFixed(3)}]`,
+          `different pairs:   ${diff.length}   mean ${mean(diff).toFixed(4)}  std ${std(diff).toFixed(4)}  range [${Math.min(...diff).toFixed(3)}, ${Math.max(...diff).toFixed(3)}]`,
+          ``,
+          `EER threshold        = ${a.eer.t.toFixed(4)}  (FAR ${(a.eer.far * 100).toFixed(2)}%, FRR ${(a.eer.frr * 100).toFixed(2)}%)`,
+          `best-accuracy thresh = ${a.best.t.toFixed(4)}  (acc ${(a.best.acc * 100).toFixed(2)}%, FAR ${(a.best.far * 100).toFixed(2)}%, FRR ${(a.best.frr * 100).toFixed(2)}%)`,
+          ``,
+          `Suggested: set DEFAULT_THRESHOLD / options.threshold near the EER threshold,`,
+          `then bias lower (stricter) or higher per your false-accept vs false-reject tolerance.`,
+        ].join('\n');
+        $('summary').textContent = summary;
+        console.log('[calibrate]\n' + summary);
+
+        $('out').classList.add('show');
+        status.textContent = 'Done.';
+      } catch (err) {
+        status.textContent = `Error: ${err.message}`;
+        console.error(err);
+      } finally {
+        runBtn.disabled = false;
+      }
+    });
+
+    // Models load lazily on Run; enable the picker immediately.
+    status.textContent = 'Pick a dataset folder to begin.';
+  </script>
+</body>
+</html>

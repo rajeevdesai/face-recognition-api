@@ -219,14 +219,23 @@ await compareFaces(a, b, {
 
 ## Threshold & calibration
 
-The default **0.5 cosine distance** is an uncalibrated placeholder. Before production:
+The default **0.5** (cosine distance) is a documented placeholder near common ArcFace LFW operating points (~0.4–0.5) — **not** calibrated for your model, capture conditions, or population. Calibrate before production, and re-calibrate whenever you swap the recognition model (distances aren't comparable across models).
 
-1. Assemble a labelled set of same-person and different-person image pairs representative of your capture conditions.
-2. Run `compareFaces` across them and record `details.cosineDistance` per pair.
-3. Pick the threshold that best separates the two distributions for your tolerance of false accepts vs false rejects. Typical ArcFace LFW thresholds land around 0.4–0.5.
-4. Pass it per call: `compareFaces(a, b, { threshold: 0.45 })`.
+### Calibration harness
 
-Repeat the same exercise for `livenessThreshold` using real live captures vs spoof samples.
+`demo/calibrate.html` does this locally — images never leave the browser. Serve the demo (`npm run demo`) and open it, then:
+
+1. Point it at a folder laid out as `identity/image.jpg` (one sub-folder per person).
+2. It builds same-person pairs (within an identity) and different-person pairs (across identities), runs the pipeline, and records the distance for each.
+3. It reports the two distributions plus the **EER threshold** (where false-accept rate ≈ false-reject rate) and a best-accuracy threshold, with FAR/FRR.
+
+Set `threshold` near the EER value, then bias **lower** (stricter — fewer false accepts) or **higher** (looser — fewer false rejects) per your risk tolerance: `compareFaces(a, b, { threshold: 0.42 })`. Point the harness at a different `recognitionModelPath` + `recognition` config to calibrate a BYO model.
+
+> ⚠️ **Use data you have the right to use.** A face used for identification is biometric personal data (GDPR Art. 9, Illinois BIPA, and similar) — calibrate on consented, self-collected, or CC0 images, **never scraped datasets**. Most well-known "face benchmarks" (LFW, VGGFace2, CelebA, …) are research-only or scraped and are not appropriate for tuning a shipped product. A single global threshold also can't equalize error rates across demographics; audit per-group if fairness matters.
+
+### Liveness threshold
+
+`livenessThreshold` (default 0.5) can't be calibrated from stored photos — it needs **live captures vs spoof attempts** (print/replay). With the bundled MiniFASNetV2, live faces score ~0.88–0.96 and screen replay ~0, so 0.5 cleanly separates those; print attacks overlap the live range (see [Open Risks](#open-risks)).
 
 ## Integration notes
 
@@ -260,7 +269,7 @@ npm install
 npm run demo   # builds, then serves at http://localhost:5299
 ```
 
-Open `demo/index.html` and upload images from `tests/fixtures/` to exercise the full pipeline end-to-end.
+Open `demo/index.html` and upload images from `tests/fixtures/` to exercise the full pipeline end-to-end. For threshold calibration, open `demo/calibrate.html` — see [Threshold & calibration](#threshold--calibration).
 
 ## Tests
 
@@ -275,7 +284,7 @@ Integration tests require browser APIs and are auto-skipped in Node. Run them vi
 1. **Recognition model extractability** *(verified)* — the downloaded `mobilefacenet.onnx` loads as a plain, unencrypted ONNX graph (input `input`, output `embedding` `[1,256]`). No fallback needed for the default weights.
 2. **Preprocessing layout** *(verified)* — confirmed NCHW `[1,3,112,112]`: inference on that shape succeeds and yields the expected 256-D embedding (an HWC graph would reject it). A consumer-supplied model with a different layout still needs its own check.
 3. **Landmark indices** *(verified 2026-06-02)* — the float16 `face_landmarker.task` emits 478 landmarks, and the five extracted points (iris 468/473, nose 1, mouth 61/291) fit `ARCFACE_DST` at ~1-2px RMS, confirming correct image-side pairing (no left/right swap). Re-confirm if you swap in a different `.task` bundle.
-4. **Threshold** — the default 0.5 is uncalibrated. Measure on your own data.
+4. **Threshold** — the default 0.5 is uncalibrated. Measure on your own (consented) data with `demo/calibrate.html`.
 5. **Test fixtures** — use CC0 / self-provided images, never scraped faces.
 6. **Liveness is not a complete spoof defense** *(validated 2026-06-02)* — with correct `[0,255]` preprocessing, MiniFASNetV2 reliably rejects screen/video replay (replay class ~0.9999) and passes live faces (~0.88–0.96). Print is the weak spot: usually rejected, but one capture false-accepted (scored 0.882 live), and the live/print score ranges overlap — a single threshold can't cleanly separate them. Hardening path: ensemble the second minivision model (MiniFASNetV1SE, 4.0 crop) and sum the softmaxes. `livenessThreshold` (default 0.5) is uncalibrated.
 7. **Liveness output format** *(validated 2026-06-02)* — the model emits **3-class logits** (softmax them). The **live class is index 1** (minivision convention: label 1 = real). Input must be raw **`[0,255]`** BGR, *not* `[0,1]` — at `[0,1]` this export is degenerate, collapsing every input to index 2 (~0.99); that artifact previously masqueraded as "index 2 = live". Index 2 is the screen/video-replay spoof class; index 0 is another spoof class. The garciafido model card's index-0 claim is wrong for these weights.

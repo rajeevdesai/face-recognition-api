@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `livenessModelPath` is now optional — omit it to disable the liveness stage
   entirely; `checkLiveness` then defaults to false.
 - `euclidean` distance metric (in addition to the default cosine).
+- `demo/calibrate.html` — in-browser threshold calibration over a labelled
+  (`identity/image.jpg`) folder: same/different distance distributions, EER and
+  best-accuracy thresholds, FAR/FRR. Works with a BYO recognition model.
 
 ### Changed
 
