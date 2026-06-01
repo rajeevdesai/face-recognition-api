@@ -6,7 +6,7 @@ Thanks for your interest in improving `face-recognition-api`. This is a small, d
 
 The highest-value work is closing the documented [Open Risks](./README.md#open-risks):
 
-- **Print-robust liveness** (Open Risk #6) — screen/video replay is handled, but print detection is imperfect (a printed photo can occasionally pass). Candidate direction: ensemble the second minivision model (MiniFASNetV1SE, 4.0 crop) and sum the softmaxes, as upstream Silent-Face does.
+- **Stronger print liveness** (Open Risk #6) — the default already ensembles MiniFASNetV2 (@2.7) + MiniFASNetV1SE (@4.0), but print can still occasionally pass. Further directions: a depth or challenge-response signal, a stronger anti-spoof model, or per-deployment liveness-threshold calibration on live-vs-print captures.
 - **Threshold calibration** — calibration data and a documented methodology for the recognition and liveness thresholds.
 - **Preprocessing / layout validation** (Open Risks #1–#3) — confirming model input layout and landmark indices against the shipped weights.
 

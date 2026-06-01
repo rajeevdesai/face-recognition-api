@@ -19,8 +19,14 @@ MOBILEFACENET_URL="https://github.com/facex-engine/facex/releases/download/facex
 # Input: NCHW [1,3,80,80], BGR, [0,255] (NOT [0,1] — at [0,1] the export
 # collapses to index 2 for every input). Output: [1,3] logits (apply softmax).
 # Live class is index 1; index 2 is screen/video replay. The model card's
-# [live,print,replay] order is wrong for these weights.
+# [live,print,replay] order is wrong for these weights. Crop scale 2.7.
 LIVENESS_URL="https://huggingface.co/garciafido/minifasnet-v2-anti-spoofing-onnx/resolve/main/minifasnet_v2.onnx"
+
+# MiniFASNetV1SE — yakhyo/face-anti-spoofing (Apache-2.0), the 2nd model in the
+# minivision Silent-Face ensemble. Same convention as V2 (NCHW [1,3,80,80], BGR,
+# [0,255], live=index 1) but crop scale 4.0. Ensembling V2+V1SE hardens print
+# detection (default config averages the two live scores).
+LIVENESS_V1SE_URL="https://github.com/yakhyo/face-anti-spoofing/releases/download/weights/MiniFASNetV1SE.onnx"
 
 echo "Downloading FaceLandmarker .task (Apache-2.0, Google MediaPipe)…"
 curl -L --progress-bar -o face_landmarker.task "$FACE_LANDMARKER_URL"
@@ -30,5 +36,8 @@ curl -L --progress-bar -o mobilefacenet.onnx "$MOBILEFACENET_URL"
 
 echo "Downloading MiniFASNetV2 ONNX (Silent-Face Anti-Spoofing)…"
 curl -L --progress-bar -o minifasnet_v2.onnx "$LIVENESS_URL"
+
+echo "Downloading MiniFASNetV1SE ONNX (Silent-Face ensemble, 2nd model)…"
+curl -L --progress-bar -o minifasnet_v1se.onnx "$LIVENESS_V1SE_URL"
 
 echo "Done. Models saved to models/"

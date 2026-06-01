@@ -7,9 +7,13 @@ vi.mock('../src/models.js', () => ({
   getModels: () => ({
     faceLandmarker: {},
     session: {},
-    livenessSession: {},
+    // Default ensemble: two liveness models (V2 @2.7, V1SE @4.0)
+    livenessSessions: [{}, {}],
     recognitionConfig: { inputSize: 112, metric: 'cosine' },
-    livenessConfig: { cropScale: 2.7, inputSize: 80 },
+    livenessConfigs: [
+      { cropScale: 2.7, inputSize: 80 },
+      { cropScale: 4.0, inputSize: 80 },
+    ],
   }),
 }));
 
@@ -236,5 +240,15 @@ describe('flag: liveness_fail', () => {
     expect(result.match).toBe(true);
     expect(result.flags).not.toContain('liveness_fail');
     expect(result.details.livenessScore).toBeUndefined();
+  });
+
+  it('averages the live scores across an ensemble', async () => {
+    mockDetect.mockReturnValueOnce([makeFace()]).mockReturnValueOnce([makeFace()]);
+    mockEmbed.mockResolvedValue(makeEmb(0)); // identity matches
+    // two liveness models → scored in order; mean(0.9, 0.1) = 0.5
+    mockScoreLiveness.mockResolvedValueOnce(0.9).mockResolvedValueOnce(0.1);
+    const result: CompareResult = await compareFaces(dummyImageData(), dummyImageData());
+    expect(result.details.livenessScore).toBeCloseTo(0.5, 5);
+    expect(mockScoreLiveness).toHaveBeenCalledTimes(2);
   });
 });

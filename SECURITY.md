@@ -32,9 +32,10 @@ This is a face-verification library, not a complete authentication system. Sever
 properties are **documented design limitations, not vulnerabilities** — see
 [Open Risks](./README.md#open-risks):
 
-- **Liveness is not a complete spoof defense.** Screen and video replay are reliably
-  rejected, but print detection is imperfect — a printed photo can occasionally pass
-  as live. Do not rely on the liveness check as your only anti-spoof measure.
+- **Liveness is not a complete spoof defense.** The default two-model ensemble reliably
+  rejects screen and video replay, but print is the hard case — a printed photo can
+  still occasionally pass as live. Do not rely on the liveness check as your only
+  anti-spoof measure.
 - **Uncalibrated thresholds.** The default `threshold` / `livenessThreshold` are
   placeholders; recognition accuracy is bounded by the embedding model. Calibrate
   on your own data before production.

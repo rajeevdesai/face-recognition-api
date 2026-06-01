@@ -63,17 +63,17 @@ export async function compareFaces(
 ): Promise<CompareResult> {
   const threshold = options.threshold ?? DEFAULT_THRESHOLD;
   const livenessThreshold = options.livenessThreshold ?? 0.5;
-  const { faceLandmarker, session, livenessSession, recognitionConfig, livenessConfig } =
+  const { faceLandmarker, session, livenessSessions, recognitionConfig, livenessConfigs } =
     getModels();
 
-  // Liveness runs by default when a model is loaded. Explicitly requesting it
-  // without a loaded model is a configuration error.
-  if (options.checkLiveness === true && !livenessSession) {
+  // Liveness runs by default when at least one model is loaded. Explicitly
+  // requesting it without a loaded model is a configuration error.
+  if (options.checkLiveness === true && livenessSessions.length === 0) {
     throw new Error(
       'checkLiveness:true but no liveness model is loaded. Pass livenessModelPath to loadModels().',
     );
   }
-  const runLiveness = options.checkLiveness ?? livenessSession !== null;
+  const runLiveness = options.checkLiveness ?? livenessSessions.length > 0;
 
   const [baselineData, currentData] = await Promise.all([
     toImageData(baseline),
@@ -129,15 +129,17 @@ export async function compareFaces(
   }
 
   // --- Liveness check on best-match face ---
+  // Ensemble: each model gets its own crop (scale) + config; the live scores are
+  // averaged. A single model is just an average of one.
   let livenessScore: number | undefined;
-  if (runLiveness && livenessSession) {
-    const livenessCrop = cropForLiveness(
-      currentData,
-      bestFaceLandmarks,
-      livenessConfig.cropScale,
-      livenessConfig.inputSize,
-    );
-    livenessScore = await scoreLiveness(livenessSession, livenessCrop, livenessConfig);
+  if (runLiveness && livenessSessions.length > 0) {
+    let sum = 0;
+    for (let k = 0; k < livenessSessions.length; k++) {
+      const cfg = livenessConfigs[k];
+      const crop = cropForLiveness(currentData, bestFaceLandmarks, cfg.cropScale, cfg.inputSize);
+      sum += await scoreLiveness(livenessSessions[k], crop, cfg);
+    }
+    livenessScore = sum / livenessSessions.length;
     if (livenessScore < livenessThreshold) flags.push('liveness_fail');
   }
 

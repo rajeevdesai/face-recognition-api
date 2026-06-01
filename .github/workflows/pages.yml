@@ -43,7 +43,7 @@ jobs:
           cp demo/index.html _site/index.html
           cp demo/calibrate.html _site/calibrate.html
           cp -r dist/. _site/dist/
-          cp models/face_landmarker.task models/mobilefacenet.onnx models/minifasnet_v2.onnx _site/models/
+          cp models/face_landmarker.task models/mobilefacenet.onnx models/minifasnet_v2.onnx models/minifasnet_v1se.onnx _site/models/
           # demo uses absolute /dist /models (works locally from repo root); rewrite to
           # relative for the project Pages base. Anchored on the quote char so jsDelivr
           # CDN URLs (…onnxruntime-web@1.20.0/dist/…) are left intact.

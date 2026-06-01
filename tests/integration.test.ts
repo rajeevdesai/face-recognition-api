@@ -28,7 +28,8 @@ describe.skipIf(BROWSER_ONLY)('integration — real pipeline', () => {
       await loadModels({
         faceLandmarkerPath: 'models/face_landmarker.task',
         recognitionModelPath: 'models/mobilefacenet.onnx',
-        livenessModelPath: 'models/minifasnet_v2.onnx',
+        livenessModelPath: ['models/minifasnet_v2.onnx', 'models/minifasnet_v1se.onnx'],
+        liveness: [{ cropScale: 2.7 }, { cropScale: 4.0 }],
       });
       // Probe a fixture; if absent, skip the suite rather than fail.
       await compareFaces('tests/fixtures/person_a_1.jpg', 'tests/fixtures/person_a_1.jpg', {

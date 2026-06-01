@@ -91,14 +91,22 @@ export interface ModelConfig {
   faceLandmarkerPath?: string;
   /** Path or URL to the recognition ONNX model (default: facex_nano-compatible). */
   recognitionModelPath?: string;
-  /** Path or URL to the liveness ONNX model. Omit to disable liveness entirely. */
-  livenessModelPath?: string;
+  /**
+   * Path(s) to the liveness ONNX model(s). Omit to disable liveness entirely.
+   * Pass an array to ensemble multiple models — their live scores are averaged
+   * (the default setup pairs MiniFASNetV2 @2.7 with MiniFASNetV1SE @4.0).
+   */
+  livenessModelPath?: string | string[];
   /** Base URL/path for WASM blobs (MediaPipe + onnxruntime-web). */
   wasmBasePath?: string;
   /** Run a dummy inference after load to avoid first-call latency. Default: true. */
   warmup?: boolean;
   /** Preprocessing/metric overrides for a bring-your-own recognition model. */
   recognition?: RecognitionConfig;
-  /** Preprocessing/class overrides for a bring-your-own liveness model. */
-  liveness?: LivenessConfig;
+  /**
+   * Preprocessing/class overrides for the liveness model(s). Pass an array
+   * (parallel to livenessModelPath) for per-model config in an ensemble; a single
+   * object is applied to every model.
+   */
+  liveness?: LivenessConfig | LivenessConfig[];
 }

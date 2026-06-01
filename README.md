@@ -16,7 +16,7 @@ MediaPipe FaceLandmarker → Umeyama alignment → MobileFaceNet ONNX → cosine
                                                       (+ optional MiniFASNetV2 liveness)
 ```
 
-> ⚠️ **Not a sole authentication factor.** The bundled liveness model reliably rejects screen/video **replay**, but **print** detection is imperfect — a printed photo can occasionally pass as live. Pair with another factor for anything security-critical. See [Open Risks](#open-risks).
+> ⚠️ **Not a sole authentication factor.** The bundled liveness (a two-model anti-spoof ensemble) reliably rejects screen/video **replay**; **print** is the hard case and can still occasionally pass. Pair with another factor for anything security-critical. See [Open Risks](#open-risks).
 
 ---
 
@@ -49,7 +49,7 @@ MediaPipe FaceLandmarker → Umeyama alignment → MobileFaceNet ONNX → cosine
 ## What it does *not* do
 
 - **No 1:N identification / search.** It compares two faces; it does not search a gallery or database of identities.
-- **No bulletproof liveness.** Screen/video replay is reliably rejected, but print attacks are caught only unreliably — a printed photo can occasionally pass (see [Open Risks](#open-risks)). Treat liveness as one signal, not a guarantee.
+- **No bulletproof liveness.** Screen/video replay is reliably rejected; print is the hard case — even with the default two-model ensemble, a printed photo can occasionally pass (see [Open Risks](#open-risks)). Treat liveness as one signal, not a guarantee.
 - **No calibrated probability.** `confidence` is a margin below the threshold, not a true match probability.
 - **No perfect accuracy.** Recognition is bounded by the embedding model — `facex_nano` scores ~95.62% on LFW, and harder in-the-wild captures (pose, lighting, occlusion) do worse. Calibrate and expect some error.
 - **No server / Node runtime.** Requires browser APIs (`createImageBitmap`, `OffscreenCanvas`, WASM). It will not run under Node or SSR.
@@ -88,7 +88,9 @@ import { loadModels, compareFaces } from '@rajeevdesai/face-recognition';
 await loadModels({
   faceLandmarkerPath: '/models/face_landmarker.task',
   recognitionModelPath: '/models/mobilefacenet.onnx',
-  livenessModelPath: '/models/minifasnet_v2.onnx',  // optional — omit to disable liveness
+  // Liveness ensemble (omit to disable); array → scores averaged.
+  livenessModelPath: ['/models/minifasnet_v2.onnx', '/models/minifasnet_v1se.onnx'],
+  liveness: [{ cropScale: 2.7 }, { cropScale: 4.0 }],
   // wasmBasePath: '/wasm/'  ← only if ort .wasm files aren't on the default CDN
 });
 
@@ -107,7 +109,7 @@ Loads and caches the models as singletons (FaceLandmarker + recognition, plus li
 |-------|----------|---------|-------------|
 | `faceLandmarkerPath` | no | `models/face_landmarker.task` | MediaPipe FaceLandmarker `.task` |
 | `recognitionModelPath` | no | `models/mobilefacenet.onnx` | Embedding model ONNX |
-| `livenessModelPath` | no | — | Liveness ONNX. **Omit to disable liveness entirely.** |
+| `livenessModelPath` | no | — | Liveness ONNX path, or an **array to ensemble** (live scores averaged). Omit to disable liveness. |
 | `wasmBasePath` | no | jsDelivr CDN | Base URL for MediaPipe + onnxruntime-web `.wasm` |
 | `warmup` | no | `true` | Run a dummy inference to avoid first-call latency |
 | `recognition` | no | facex_nano spec | Preprocessing/metric overrides for a BYO recognition model — see [Bring your own model](#bring-your-own-model) |
@@ -209,7 +211,7 @@ await loadModels({
 
 ## Liveness
 
-A liveness check (MiniFASNetV2) runs on the matched face by default. The score is `0–1`; below `livenessThreshold` it sets the `liveness_fail` flag and forces `match: false`.
+A liveness check runs on the matched face by default — an **ensemble** of MiniFASNetV2 (crop 2.7) and MiniFASNetV1SE (crop 4.0), each scored and **averaged** (minivision's Silent-Face approach). The score is `0–1`; below `livenessThreshold` it sets the `liveness_fail` flag and forces `match: false`. Pass a single `livenessModelPath` string to use one model, or omit it to disable liveness.
 
 ```typescript
 await compareFaces(a, b, {
@@ -218,7 +220,7 @@ await compareFaces(a, b, {
 });
 ```
 
-**Reliable for replay, imperfect for print.** MiniFASNetV2 reliably rejects screen/video replay, but print detection is imperfect — a printed photo can occasionally score as live. Do **not** treat `liveness_fail` as a complete spoof defense — see [Open Risks](#open-risks).
+**Reliable for replay, harder for print.** The ensemble reliably rejects screen/video replay; print is the hard case and can still occasionally score as live. Do **not** treat `liveness_fail` as a complete spoof defense — see [Open Risks](#open-risks).
 
 ## Threshold & calibration
 
@@ -238,7 +240,7 @@ Set `threshold` near the EER value, then bias **lower** (stricter — fewer fals
 
 ### Liveness threshold
 
-`livenessThreshold` (default 0.5) can't be calibrated from stored photos — it needs **live captures vs spoof attempts** (print/replay). With the bundled MiniFASNetV2, live faces score ~0.88–0.96 and screen replay ~0, so 0.5 cleanly separates those; print attacks overlap the live range (see [Open Risks](#open-risks)).
+`livenessThreshold` (default 0.5) can't be calibrated from stored photos — it needs **live captures vs spoof attempts** (print/replay). Live faces score high and screen replay near zero, so 0.5 separates those; print can overlap the live range (see [Open Risks](#open-risks)).
 
 ## Integration notes
 
@@ -280,7 +282,7 @@ Open `demo/index.html`, capture a **baseline** and a **current** frame from your
 npm test   # Node-safe unit tests: Umeyama math + flag logic
 ```
 
-Integration tests require browser APIs and are auto-skipped in Node. Run them via the demo (upload fixtures manually) or with `vite-node` if browser polyfills are available. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the testing strategy.
+Integration tests require browser APIs **and** locally-provided consented fixtures, so they auto-skip in Node and whenever fixtures are absent. To run them, supply the images named in the integration test header (gitignored) in a browser/polyfilled env. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the testing strategy.
 
 ## Open Risks
 
@@ -289,7 +291,7 @@ Integration tests require browser APIs and are auto-skipped in Node. Run them vi
 3. **Landmark indices** *(verified 2026-06-02)* — the float16 `face_landmarker.task` emits 478 landmarks, and the five extracted points (iris 468/473, nose 1, mouth 61/291) fit `ARCFACE_DST` at ~1-2px RMS, confirming correct image-side pairing (no left/right swap). Re-confirm if you swap in a different `.task` bundle.
 4. **Threshold** — the default 0.5 is uncalibrated. Measure on your own (consented) data with `demo/calibrate.html`.
 5. **Test fixtures** — use CC0 / self-provided images, never scraped faces.
-6. **Liveness is not a complete spoof defense** *(validated 2026-06-02)* — with correct `[0,255]` preprocessing, MiniFASNetV2 reliably rejects screen/video replay (replay class ~0.9999) and passes live faces (~0.88–0.96). Print is the weak spot: usually rejected, but one capture false-accepted (scored 0.882 live), and the live/print score ranges overlap — a single threshold can't cleanly separate them. Hardening path: ensemble the second minivision model (MiniFASNetV1SE, 4.0 crop) and sum the softmaxes. `livenessThreshold` (default 0.5) is uncalibrated.
+6. **Liveness is not a complete spoof defense** *(updated 2026-06-02)* — the default ensembles MiniFASNetV2 (@2.7) and MiniFASNetV1SE (@4.0), averaging their live scores (minivision's approach). Both reliably reject screen/video replay. **Print remains the hard case**: single-V2 measurements showed live faces ~0.88–0.96, replay ~0, but one printed photo false-accepted at 0.882 (the live/print ranges overlap). The ensemble is intended to reduce print false-accepts; passive RGB liveness cannot fully eliminate them, so still pair with another factor. `livenessThreshold` (default 0.5) is uncalibrated.
 7. **Liveness output format** *(validated 2026-06-02)* — the model emits **3-class logits** (softmax them). The **live class is index 1** (minivision convention: label 1 = real). Input must be raw **`[0,255]`** BGR, *not* `[0,1]` — at `[0,1]` this export is degenerate, collapsing every input to index 2 (~0.99); that artifact previously masqueraded as "index 2 = live". Index 2 is the screen/video-replay spoof class; index 0 is another spoof class. The garciafido model card's index-0 claim is wrong for these weights.
 
 ## Licensing

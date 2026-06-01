@@ -294,7 +294,9 @@
     loadModels({
       faceLandmarkerPath:   '/models/face_landmarker.task',
       recognitionModelPath: '/models/mobilefacenet.onnx',
-      livenessModelPath:    '/models/minifasnet_v2.onnx',
+      // Ensemble: MiniFASNetV2 @2.7 + MiniFASNetV1SE @4.0 (hardens print detection)
+      livenessModelPath:    ['/models/minifasnet_v2.onnx', '/models/minifasnet_v1se.onnx'],
+      liveness:             [{ cropScale: 2.7 }, { cropScale: 4.0 }],
     }).then(() => {
       status.textContent = 'Ready. Capture baseline and current, then compare.';
     }).catch(err => {

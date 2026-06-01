@@ -27,13 +27,14 @@ Weights are **not** bundled (license + size). Download them into `models/`:
 bash models/download.sh
 ```
 
-This fetches three files:
+This fetches four files:
 
 | File | Model | License |
 |------|-------|---------|
 | `face_landmarker.task` | MediaPipe FaceLandmarker | Apache-2.0 |
 | `mobilefacenet.onnx` | facex_nano (256-D embedding) | Apache-2.0 |
-| `minifasnet_v2.onnx` | MiniFASNetV2 liveness (optional at runtime) | Apache-2.0 |
+| `minifasnet_v2.onnx` | MiniFASNetV2 liveness (crop 2.7) | Apache-2.0 |
+| `minifasnet_v1se.onnx` | MiniFASNetV1SE liveness (crop 4.0, ensemble 2nd model) | Apache-2.0 |
 
 > Review [Open Risks](./README.md#open-risks) #1 before relying on the recognition model in production.
 
@@ -51,7 +52,8 @@ Then point `loadModels` at wherever you served them:
 await loadModels({
   faceLandmarkerPath: '/models/face_landmarker.task',
   recognitionModelPath: '/models/mobilefacenet.onnx',
-  livenessModelPath: '/models/minifasnet_v2.onnx',
+  livenessModelPath: ['/models/minifasnet_v2.onnx', '/models/minifasnet_v1se.onnx'],
+  liveness: [{ cropScale: 2.7 }, { cropScale: 4.0 }],
 });
 ```
 
@@ -84,7 +86,8 @@ import { loadModels, compareFaces } from '@rajeevdesai/face-recognition';
 await loadModels({
   faceLandmarkerPath: '/models/face_landmarker.task',
   recognitionModelPath: '/models/mobilefacenet.onnx',
-  livenessModelPath: '/models/minifasnet_v2.onnx',
+  livenessModelPath: ['/models/minifasnet_v2.onnx', '/models/minifasnet_v1se.onnx'],
+  liveness: [{ cropScale: 2.7 }, { cropScale: 4.0 }],
 });
 
 const result = await compareFaces(imgA, imgB);
