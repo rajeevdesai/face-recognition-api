@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Download model weights into models/. Not committed (see .gitignore).
 #
-# TODO (Open Risk #1): Replace MOBILEFACENET_URL with the validated plain ONNX
-# from facex-engine/facex releases once confirmed extractable (Apache-2.0 weights).
-# If encryption is found, fall back to FaceONNX or another Apache-2.0 source.
-# Do NOT use InsightFace weights here (non-commercial license).
+# Recognition model is facex_nano (set below) — verified (Open Risk #1) as a plain,
+# unencrypted ONNX: input `input` [1,3,112,112], output `embedding` [1,256].
+# Licensing: keep recognition weights Apache-2.0 — do NOT swap in InsightFace
+# weights (non-commercial license).
 
 set -euo pipefail
 cd "$(dirname "$0")"
