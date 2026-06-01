@@ -16,9 +16,10 @@ FACE_LANDMARKER_URL="https://storage.googleapis.com/mediapipe-models/face_landma
 MOBILEFACENET_URL="https://github.com/facex-engine/facex/releases/download/facex-nano-1.0/facex_nano.onnx"
 
 # MiniFASNetV2 — garciafido/minifasnet-v2-anti-spoofing-onnx (Apache-2.0).
-# Input: NCHW [1,3,80,80], BGR, [0,1]. Output: [1,3] logits (apply softmax).
-# Live class is index 2 (empirical — genuine face scores ~0.99 there); the model
-# card's [live,print,replay] order is wrong for these weights.
+# Input: NCHW [1,3,80,80], BGR, [0,255] (NOT [0,1] — at [0,1] the export
+# collapses to index 2 for every input). Output: [1,3] logits (apply softmax).
+# Live class is index 1; index 2 is screen/video replay. The model card's
+# [live,print,replay] order is wrong for these weights.
 LIVENESS_URL="https://huggingface.co/garciafido/minifasnet-v2-anti-spoofing-onnx/resolve/main/minifasnet_v2.onnx"
 
 echo "Downloading FaceLandmarker .task (Apache-2.0, Google MediaPipe)…"

@@ -6,8 +6,7 @@ Thanks for your interest in improving `face-recognition-api`. This is a small, d
 
 The highest-value work is closing the documented [Open Risks](./README.md#open-risks):
 
-- **Liveness class order / softmax** (Open Risk #7) — verify against the real `minifasnet_v2.onnx` whether the output is logits or softmax, and the true class order. Fix `src/liveness.ts` accordingly with evidence in the PR.
-- **Replay-resistant liveness** (Open Risk #6) — the current model is print-only. Candidate directions: treating a second detected face as a spoof signal, an FFT/moiré frequency check, or swapping to a different anti-spoofing architecture.
+- **Print-robust liveness** (Open Risk #6) — screen/video replay is handled, but print detection is imperfect (a printed photo can occasionally pass). Candidate direction: ensemble the second minivision model (MiniFASNetV1SE, 4.0 crop) and sum the softmaxes, as upstream Silent-Face does.
 - **Threshold calibration** — calibration data and a documented methodology for the recognition and liveness thresholds.
 - **Preprocessing / layout validation** (Open Risks #1–#3) — confirming model input layout and landmark indices against the shipped weights.
 

@@ -13,7 +13,7 @@ MediaPipe FaceLandmarker → Umeyama alignment → MobileFaceNet ONNX → cosine
                                                       (+ optional MiniFASNetV2 liveness)
 ```
 
-> ⚠️ **Not a sole authentication factor.** The bundled liveness model flags **print attacks only** — it does **not** detect screen/video replay. Pair with another factor for anything security-critical. See [Open Risks](#open-risks).
+> ⚠️ **Not a sole authentication factor.** The bundled liveness model reliably rejects screen/video **replay**, but **print** detection is imperfect — a printed photo can occasionally pass as live. Pair with another factor for anything security-critical. See [Open Risks](#open-risks).
 
 ---
 
@@ -46,7 +46,7 @@ MediaPipe FaceLandmarker → Umeyama alignment → MobileFaceNet ONNX → cosine
 ## What it does *not* do
 
 - **No 1:N identification / search.** It compares two faces; it does not search a gallery or database of identities.
-- **No replay-resistant liveness.** Screen and video replay are scored as live (see [Open Risks](#open-risks)). Print attacks only.
+- **No bulletproof liveness.** Screen/video replay is reliably rejected, but print attacks are caught only unreliably — a printed photo can occasionally pass (see [Open Risks](#open-risks)). Treat liveness as one signal, not a guarantee.
 - **No calibrated probability.** `confidence` is a margin below the threshold, not a true match probability.
 - **No perfect accuracy.** Recognition is bounded by the embedding model — `facex_nano` scores ~95.62% on LFW, and harder in-the-wild captures (pose, lighting, occlusion) do worse. Calibrate and expect some error.
 - **No server / Node runtime.** Requires browser APIs (`createImageBitmap`, `OffscreenCanvas`, WASM). It will not run under Node or SSR.
@@ -154,7 +154,7 @@ interface CompareResult {
 | `multiple_faces` | >1 face in current — best match used (weakens anti-fraud, documented) |
 | `identity_mismatch` | distance > threshold |
 | `low_confidence` | matched, but distance sits in the grey zone (80–100% of threshold) |
-| `liveness_fail` | liveness score below threshold (print attack suspected) — `match` forced false |
+| `liveness_fail` | liveness score below threshold (spoof suspected) — `match` forced false |
 
 ### Bring your own model
 
@@ -175,7 +175,7 @@ await compareFaces(a, b, {
 });
 ```
 
-**Print attacks only.** MiniFASNetV2 does not detect screen/video replay (it scores replays as live). Do **not** rely on `liveness_fail` as a remote-replay defense — see [Open Risks](#open-risks).
+**Reliable for replay, imperfect for print.** MiniFASNetV2 reliably rejects screen/video replay, but print detection is imperfect — a printed photo can occasionally score as live. Do **not** treat `liveness_fail` as a complete spoof defense — see [Open Risks](#open-risks).
 
 ## Threshold & calibration
 
@@ -237,8 +237,8 @@ Integration tests require browser APIs and are auto-skipped in Node. Run them vi
 3. **Landmark indices** — iris indices 468/473 are verified against the 478-landmark FaceLandmarker. Confirm against the specific `.task` bundle you download.
 4. **Threshold** — the default 0.5 is uncalibrated. Measure on your own data.
 5. **Test fixtures** — use CC0 / self-provided images, never scraped faces.
-6. **Liveness ≠ replay defense** — MiniFASNetV2 detects print attacks only; it scores screen/video replays as live. `liveness_fail` is not a remote-replay safeguard. `livenessThreshold` (default 0.5) is uncalibrated.
-7. **Liveness output format** *(verified empirically)* — the model emits **3-class logits** (softmax them). The **live class is index 2** — a genuine face scores ~0.99 there. The garciafido model card claims index 0; that labeling is **wrong** for the shipped weights, so trust the empirical index, not the card. Indices 0/1 are the spoof classes; their order isn't separately confirmed. Note: random/garbage input also peaks at index 2, so a *high* score is necessary but not sufficient — the spoof-rejection power (does a print/replay score *low*?) still needs validation on real spoof samples (see #6).
+6. **Liveness is not a complete spoof defense** *(validated 2026-06-02)* — with correct `[0,255]` preprocessing, MiniFASNetV2 reliably rejects screen/video replay (replay class ~0.9999) and passes live faces (~0.88–0.96). Print is the weak spot: usually rejected, but one capture false-accepted (scored 0.882 live), and the live/print score ranges overlap — a single threshold can't cleanly separate them. Hardening path: ensemble the second minivision model (MiniFASNetV1SE, 4.0 crop) and sum the softmaxes. `livenessThreshold` (default 0.5) is uncalibrated.
+7. **Liveness output format** *(validated 2026-06-02)* — the model emits **3-class logits** (softmax them). The **live class is index 1** (minivision convention: label 1 = real). Input must be raw **`[0,255]`** BGR, *not* `[0,1]` — at `[0,1]` this export is degenerate, collapsing every input to index 2 (~0.99); that artifact previously masqueraded as "index 2 = live". Index 2 is the screen/video-replay spoof class; index 0 is another spoof class. The garciafido model card's index-0 claim is wrong for these weights.
 
 ## Licensing
 

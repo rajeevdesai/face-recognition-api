@@ -33,25 +33,26 @@ function dummyCrop(): ImageData {
 
 const liveProb = (l: number[]) => {
   const e = l.map(Math.exp);
-  return e[2] / (e[0] + e[1] + e[2]);
+  return e[1] / (e[0] + e[1] + e[2]);
 };
 
 describe('scoreLiveness', () => {
-  it('returns the softmax probability of the live class (index 2)', async () => {
-    const logits = [-1, 0, 2];
+  it('returns the softmax probability of the live class (index 1)', async () => {
+    const logits = [-1, 2, 0];
     const score = await scoreLiveness(fakeSession(logits), dummyCrop());
     expect(score).toBeCloseTo(liveProb(logits), 6);
   });
 
-  // Regression: live is index 2, determined empirically (a genuine face scores
-  // ~0.99 there). A live-dominant output must score HIGH.
-  it('scores high when the live logit (index 2) dominates', async () => {
-    const score = await scoreLiveness(fakeSession([0, 0, 5]), dummyCrop());
+  // Regression: live is index 1 (minivision convention, label 1 = real),
+  // confirmed empirically with live/replay/print captures. A live-dominant
+  // output must score HIGH.
+  it('scores high when the live logit (index 1) dominates', async () => {
+    const score = await scoreLiveness(fakeSession([0, 5, 0]), dummyCrop());
     expect(score).toBeGreaterThan(0.9);
   });
 
   it('scores low when a spoof class dominates', async () => {
-    const score = await scoreLiveness(fakeSession([5, 0, 0]), dummyCrop());
+    const score = await scoreLiveness(fakeSession([0, 0, 5]), dummyCrop());
     expect(score).toBeLessThan(0.05);
   });
 });
