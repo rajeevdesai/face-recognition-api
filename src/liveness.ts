@@ -66,6 +66,8 @@ export function resolveLivenessConfig(c: LivenessConfig = {}): ResolvedLivenessC
  * resized to inputSize². The model needs context beyond the tight face region
  * to detect texture/reflection artifacts; scale 2.7 matches MiniFASNetV2 training.
  */
+/* v8 ignore start */
+// Browser-only (OffscreenCanvas); not executable under Node unit tests.
 export function cropForLiveness(
   source: ImageData,
   landmarks: NormalizedLandmark[],
@@ -113,6 +115,7 @@ export function cropForLiveness(
 
   return ctx.getImageData(0, 0, inputSize, inputSize);
 }
+/* v8 ignore stop */
 
 /**
  * Run the liveness model on a crop and return the live-class probability.

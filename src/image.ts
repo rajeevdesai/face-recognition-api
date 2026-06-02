@@ -31,6 +31,9 @@ export function assertSafeImageSource(input: string): void {
  *
  * String inputs are fetched, so pass only sources you trust (see assertSafeImageSource).
  */
+/* v8 ignore start */
+// Browser-only (createImageBitmap / OffscreenCanvas / document); not executable
+// under Node unit tests. assertSafeImageSource above is unit-tested separately.
 export async function toImageData(
   input: HTMLImageElement | ImageData | string,
 ): Promise<ImageData> {
@@ -64,3 +67,4 @@ export function imageDataToCanvas(imageData: ImageData): HTMLCanvasElement {
   (canvas.getContext('2d') as CanvasRenderingContext2D).putImageData(imageData, 0, 0);
   return canvas;
 }
+/* v8 ignore stop */

@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
+import type * as ort from 'onnxruntime-web';
 
-// embed.ts imports onnxruntime-web at module load; these pure fns don't use it, so stub it out.
+// embed.ts imports onnxruntime-web at module load; stub it (Tensor only needs to construct).
 vi.mock('onnxruntime-web', () => ({ Tensor: class {} }));
 
 import {
+  embed,
   l2normalize,
   cosineDistance,
   euclideanDistance,
@@ -11,6 +13,15 @@ import {
   resolveRecognitionConfig,
   RECOGNITION_DEFAULTS,
 } from '../src/embed.js';
+
+/** Fake session whose run() returns a fixed embedding, regardless of input. */
+function fakeSession(embedding: number[]): ort.InferenceSession {
+  return {
+    inputNames: ['input'],
+    outputNames: ['embedding'],
+    run: async () => ({ embedding: { data: Float32Array.from(embedding) } }),
+  } as unknown as ort.InferenceSession;
+}
 
 function norm(v: Float32Array): number {
   let s = 0;
@@ -88,6 +99,26 @@ describe('distance metric dispatch', () => {
       5,
       6,
     );
+  });
+});
+
+describe('embed', () => {
+  const face = {
+    width: 112,
+    height: 112,
+    data: new Uint8ClampedArray(112 * 112 * 4),
+  } as unknown as ImageData;
+
+  it('runs the session and L2-normalizes by default', async () => {
+    const out = await embed(fakeSession([3, 4]), face);
+    expect(out).toBeInstanceOf(Float32Array);
+    expect(norm(out)).toBeCloseTo(1, 6);
+  });
+
+  it('returns the raw embedding when l2normalize is false', async () => {
+    const cfg = resolveRecognitionConfig({ l2normalize: false });
+    const out = await embed(fakeSession([3, 4]), face, cfg);
+    expect(Array.from(out)).toEqual([3, 4]);
   });
 });
 

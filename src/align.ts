@@ -202,6 +202,8 @@ function svd2x2(
  * @param outputSize - Square output side in pixels (default 112)
  * @returns outputSize×outputSize ImageData of the aligned face crop
  */
+/* v8 ignore start */
+// Browser-only (OffscreenCanvas); not executable under Node unit tests.
 export function warpFace(
   source: ImageData,
   fivePoints: [number, number][],
@@ -226,3 +228,4 @@ export function warpFace(
 
   return ctx.getImageData(0, 0, outputSize, outputSize);
 }
+/* v8 ignore stop */
