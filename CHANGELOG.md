@@ -5,6 +5,14 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/rajeevdesai/face-verification-api/compare/v0.2.0...v0.2.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* add types condition to package exports map ([cc83246](https://github.com/rajeevdesai/face-verification-api/commit/cc832462f243f679aac17df6b1914112460e4433))
+* add types condition to package exports map ([14fe51c](https://github.com/rajeevdesai/face-verification-api/commit/14fe51c4ad775467f501f7866c617dc9c02f9a6c))
+
 ## [0.2.0](https://github.com/rajeevdesai/face-verification-api/compare/v0.1.0...v0.2.0) (2026-06-02)
 
 
