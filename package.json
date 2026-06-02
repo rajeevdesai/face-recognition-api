@@ -30,9 +30,6 @@
     "browser",
     "wasm"
   ],
-  "engines": {
-    "node": ">=18"
-  },
   "sideEffects": false,
   "main": "dist/face-verification-api.umd.cjs",
   "module": "dist/face-verification-api.js",
