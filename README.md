@@ -72,11 +72,11 @@ npm install @rajeevdesai/face-recognition-api
 # peer deps (often already present in your app):
 npm install onnxruntime-web @mediapipe/tasks-vision
 
-# download the model weights into ./models
-bash models/download.sh
+# download the 4 model weights straight into your served static dir:
+npx @rajeevdesai/face-recognition-api download public/models
 ```
 
-Then **serve the `models/` directory** alongside your app so the browser can fetch the `.task` / `.onnx` files at runtime.
+`public/models/` is served at `/models/...` in Vite / CRA / Next.js — point `loadModels` there. Pass any directory you serve (or a CDN; `loadModels` also accepts absolute URLs).
 
 👉 Full step-by-step setup, model hosting, WASM hosting, and framework-specific notes: **[INSTALL.md](./INSTALL.md)**.
 
@@ -298,7 +298,7 @@ Standing limitations to weigh before production. *(Verified during development a
 
 - **Our code:** MIT (see [LICENSE](./LICENSE)).
 - **Model weights:** Apache-2.0 (see [NOTICE](./NOTICE) for attribution and the MS1M-RefineV2 data caveat).
-- Models are **not** bundled — downloaded separately via `models/download.sh`. Consumers are responsible for compliance with the applicable model licenses.
+- Models are **not** bundled — downloaded separately via `npx @rajeevdesai/face-recognition-api download <dir>`. Consumers are responsible for compliance with the applicable model licenses.
 
 ## Contributing
 

@@ -23,11 +23,16 @@ The peer-dependency versions are intentionally loose (`onnxruntime-web >=1.17.0`
 
 ## 3. Download the model weights
 
-Weights are **not** bundled (license + size). Download them into `models/`:
+Weights are **not** bundled (license + size). The package ships a downloader that
+fetches them straight into a directory you choose — point it at wherever you
+serve static assets (see step 4), e.g. `public/models`:
 
 ```bash
-bash models/download.sh
+npx @rajeevdesai/face-recognition-api download public/models
 ```
+
+> Cloning the repo instead of installing from npm? Run `npm run download -- public/models`
+> (same script). Defaults to `public/models` if you omit the directory.
 
 This fetches four files:
 
@@ -42,11 +47,11 @@ This fetches four files:
 
 ## 4. Serve the models
 
-The browser fetches the model files at runtime, so they must be reachable over HTTP from your app.
+The browser fetches the model files at runtime, so they must be reachable over HTTP from your app. The downloader in step 3 already writes into your served directory — just point it at the right place:
 
-- **Vite / CRA:** copy the three files into `public/models/`. They will be served at `/models/...`.
-- **Next.js:** place them under `public/models/`. Same `/models/...` paths.
-- **Custom static host / CDN:** upload them anywhere reachable and pass absolute URLs to `loadModels`.
+- **Vite / CRA:** `npx @rajeevdesai/face-recognition-api download public/models` → served at `/models/...`.
+- **Next.js:** same — `public/models/`, served at `/models/...`.
+- **Custom static host / CDN:** download to any directory, upload it anywhere reachable, and pass absolute URLs to `loadModels`.
 
 Then point `loadModels` at wherever you served them:
 

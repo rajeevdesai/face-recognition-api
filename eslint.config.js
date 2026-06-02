@@ -30,5 +30,12 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Node CLI (weights downloader), not browser code.
+    files: ['bin/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly' },
+    },
+  },
   prettier,
 );

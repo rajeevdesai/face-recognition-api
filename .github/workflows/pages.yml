@@ -36,7 +36,7 @@ jobs:
       - name: Build library
         run: npm run build
       - name: Download model weights
-        run: bash models/download.sh
+        run: node bin/download.mjs models
       - name: Assemble site (relative paths for the project Pages base)
         run: |
           mkdir -p _site/dist _site/models

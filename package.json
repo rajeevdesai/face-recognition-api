@@ -43,15 +43,19 @@
       "require": "./dist/face-recognition-api.umd.cjs"
     }
   },
+  "bin": {
+    "face-recognition-api": "bin/download.mjs"
+  },
   "files": [
     "dist",
     "NOTICE",
-    "models/download.sh"
+    "bin"
   ],
   "scripts": {
     "build": "tsc --noEmit && vite build",
     "dev": "concurrently \"vite build --watch\" \"python3 -m http.server 5299\"",
     "demo": "npm run build && python3 -m http.server 5299",
+    "download": "node bin/download.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",

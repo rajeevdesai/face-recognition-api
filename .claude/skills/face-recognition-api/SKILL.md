@@ -127,15 +127,16 @@ interface CompareResult {
 ```bash
 npm install @rajeevdesai/face-recognition-api
 npm install onnxruntime-web @mediapipe/tasks-vision   # peer deps: ort >=1.17.0, tasks-vision >=0.10.0
-bash models/download.sh                                # weights NOT bundled — fetch into ./models
+# weights NOT bundled — download straight into your served static dir:
+npx @rajeevdesai/face-recognition-api download public/models
 ```
 
-`download.sh` fetches four Apache-2.0 files: `face_landmarker.task`,
-`mobilefacenet.onnx` (facex_nano, 256-D), `minifasnet_v2.onnx` (crop 2.7),
-`minifasnet_v1se.onnx` (crop 4.0, ensemble 2nd model). **Caveat:** the script
-lives at `node_modules/@rajeevdesai/face-recognition-api/models/download.sh` once
-installed; run it from there, or copy it, since the package ships only
-`download.sh` (not the weights).
+The downloader (a `bin` shipped in the package, also `npm run download` from a
+clone) fetches four Apache-2.0 files into the dir you pass (default
+`public/models`): `face_landmarker.task`, `mobilefacenet.onnx` (facex_nano,
+256-D), `minifasnet_v2.onnx` (crop 2.7), `minifasnet_v1se.onnx` (crop 4.0,
+ensemble 2nd model). Write them where your app serves static assets — never into
+`node_modules`. `loadModels` also accepts absolute URLs if you host on a CDN.
 
 **Serve the models over HTTP** so the browser can fetch them at runtime:
 - Vite / CRA / Next.js: put the files in `public/models/` → served at `/models/...`.
@@ -260,5 +261,5 @@ async function onVerify(idPhoto: string, selfie: File) {
 
 facex_nano ≈ 95.62% on LFW; harder in-the-wild captures (pose, lighting,
 occlusion) do worse — design for some error. Library code is MIT; model weights
-are Apache-2.0 and **not bundled** (downloaded via `models/download.sh`).
+are Apache-2.0 and **not bundled** (downloaded via the `npx` downloader above).
 Consumers are responsible for model-license compliance.

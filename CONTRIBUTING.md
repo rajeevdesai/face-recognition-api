@@ -16,7 +16,7 @@ The highest-value work is closing the documented [Open Risks](./README.md#open-r
 git clone <your-fork>
 cd face-recognition-api
 npm install
-bash models/download.sh   # needed for the demo / integration runs
+npm run download -- models   # weights into models/ for the demo / integration runs
 ```
 
 ## Project layout
@@ -80,7 +80,7 @@ Published to npm as [`@rajeevdesai/face-recognition-api`](https://www.npmjs.com/
    git tag vX.Y.Z
    git push origin main --tags
    ```
-4. The tag triggers `.github/workflows/release.yml`: lint → type-check → test → `npm publish --provenance`. Only the built `dist/` + `NOTICE` + `models/download.sh` ship (see the `files` field); model weights are never bundled.
+4. The tag triggers `.github/workflows/release.yml`: lint → type-check → test → `npm publish --provenance`. Only the built `dist/` + `NOTICE` + the `bin/` downloader ship (see the `files` field); model weights are never bundled.
 
 A manual `npm publish` also works — `prepublishOnly` builds first — but skips the CI gate and provenance. Prefer the tag.
 
