@@ -1,6 +1,6 @@
 {
   "name": "@rajeevdesai/face-verification-api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Browser face verification library — custom pipeline (no wrapper libs)",
   "type": "module",
   "license": "MIT",
@@ -30,9 +30,6 @@
     "browser",
     "wasm"
   ],
-  "engines": {
-    "node": ">=18"
-  },
   "sideEffects": false,
   "main": "dist/face-verification-api.umd.cjs",
   "module": "dist/face-verification-api.js",

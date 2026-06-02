@@ -5,6 +5,24 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/rajeevdesai/face-verification-api/compare/v0.1.0...v0.2.0) (2026-06-02)
+
+
+### Features
+
+* add browser 1:1 face verification pipeline ([8e0883a](https://github.com/rajeevdesai/face-verification-api/commit/8e0883a8fb2d90a9bb2a415635562fd41cbe4e23))
+* configurable preprocessing + bring-your-own-model ([244a86d](https://github.com/rajeevdesai/face-verification-api/commit/244a86d2bd0801567c6053c8bf3e5be33d6625be))
+* **demo:** add threshold calibration harness ([739615d](https://github.com/rajeevdesai/face-verification-api/commit/739615d8636652fe983cabf95e90c8258463aced))
+* **liveness:** default V2+V1SE ensemble to harden print detection ([1b84352](https://github.com/rajeevdesai/face-verification-api/commit/1b84352016f2b020573b78414895724b62ef963a))
+* npx weights downloader, replace download.sh ([c3c0bac](https://github.com/rajeevdesai/face-verification-api/commit/c3c0baceeb7221db75ad15afd5da16a4912af6f2))
+
+
+### Bug Fixes
+
+* honest integration-test skipping + gitignore face fixtures ([fde7122](https://github.com/rajeevdesai/face-verification-api/commit/fde712206169da05cbcef55f3e9651805a7ecfd6))
+* **liveness:** feed [0,255], live class is index 1 ([31de455](https://github.com/rajeevdesai/face-verification-api/commit/31de455d6843bbefd6ea494fc99e551817762860))
+* **test:** use renamed details.distance in integration test ([85fd4fa](https://github.com/rajeevdesai/face-verification-api/commit/85fd4fa0a029ebae284c3c3283f29e84f8c01899))
+
 ## [Unreleased]
 
 ### Added
