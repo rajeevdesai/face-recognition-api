@@ -36,6 +36,7 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/face-verification-api.js",
       "require": "./dist/face-verification-api.umd.cjs"
     }
