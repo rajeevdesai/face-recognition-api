@@ -1,15 +1,15 @@
-# face-recognition-api
+# face-verification-api
 
-[![CI](https://github.com/rajeevdesai/face-recognition-api/actions/workflows/ci.yml/badge.svg)](https://github.com/rajeevdesai/face-recognition-api/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@rajeevdesai/face-recognition-api)](https://www.npmjs.com/package/@rajeevdesai/face-recognition-api)
+[![CI](https://github.com/rajeevdesai/face-verification-api/actions/workflows/ci.yml/badge.svg)](https://github.com/rajeevdesai/face-verification-api/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@rajeevdesai/face-verification-api)](https://www.npmjs.com/package/@rajeevdesai/face-verification-api)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![live demo](https://img.shields.io/badge/demo-try%20me-7cf?logo=github)](https://rajeevdesai.github.io/face-recognition-api/)
+[![live demo](https://img.shields.io/badge/demo-try%20me-7cf?logo=github)](https://rajeevdesai.github.io/face-verification-api/)
 
 Browser-only **1:1 face verification** library. Custom pipeline — no wrapper libraries, fully auditable, open-sourceable.
 
 Answers one question: *"Is the face in image B the same person as the face in image A?"* — entirely client-side, with no biometric data leaving the browser.
 
-**▶ [Try the live demo](https://rajeevdesai.github.io/face-recognition-api/)** — webcam capture, runs entirely in your browser; nothing is uploaded.
+**▶ [Try the live demo](https://rajeevdesai.github.io/face-verification-api/)** — webcam capture, runs entirely in your browser; nothing is uploaded.
 
 ```
 MediaPipe FaceLandmarker → Umeyama alignment → MobileFaceNet ONNX → cosine distance
@@ -67,13 +67,13 @@ MediaPipe FaceLandmarker → Umeyama alignment → MobileFaceNet ONNX → cosine
 ## Install
 
 ```bash
-npm install @rajeevdesai/face-recognition-api
+npm install @rajeevdesai/face-verification-api
 
 # peer deps (often already present in your app):
 npm install onnxruntime-web @mediapipe/tasks-vision
 
 # download the 4 model weights straight into your served static dir:
-npx @rajeevdesai/face-recognition-api download public/models
+npx @rajeevdesai/face-verification-api download public/models
 ```
 
 `public/models/` is served at `/models/...` in Vite / CRA / Next.js — point `loadModels` there. Pass any directory you serve (or a CDN; `loadModels` also accepts absolute URLs).
@@ -83,7 +83,7 @@ npx @rajeevdesai/face-recognition-api download public/models
 ## Quick start
 
 ```typescript
-import { loadModels, compareFaces } from '@rajeevdesai/face-recognition-api';
+import { loadModels, compareFaces } from '@rajeevdesai/face-verification-api';
 
 // Once at app startup — loads & caches the models (liveness optional).
 await loadModels({
@@ -298,7 +298,7 @@ Standing limitations to weigh before production. *(Verified during development a
 
 - **Our code:** MIT (see [LICENSE](./LICENSE)).
 - **Model weights:** Apache-2.0 (see [NOTICE](./NOTICE) for attribution and the MS1M-RefineV2 data caveat).
-- Models are **not** bundled — downloaded separately via `npx @rajeevdesai/face-recognition-api download <dir>`. Consumers are responsible for compliance with the applicable model licenses.
+- Models are **not** bundled — downloaded separately via `npx @rajeevdesai/face-verification-api download <dir>`. Consumers are responsible for compliance with the applicable model licenses.
 
 ## Contributing
 

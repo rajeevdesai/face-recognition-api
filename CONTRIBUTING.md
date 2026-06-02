@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in improving `face-recognition-api`. This is a small, deliberately auditable library — contributions that keep it readable and honest about its limitations are very welcome.
+Thanks for your interest in improving `face-verification-api`. This is a small, deliberately auditable library — contributions that keep it readable and honest about its limitations are very welcome.
 
 ## Where help is most useful
 
@@ -14,7 +14,7 @@ The highest-value work is closing the documented [Open Risks](./README.md#open-r
 
 ```bash
 git clone <your-fork>
-cd face-recognition-api
+cd face-verification-api
 npm install
 npm run download -- models   # weights into models/ for the demo / integration runs
 ```

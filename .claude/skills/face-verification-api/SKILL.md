@@ -1,7 +1,7 @@
 ---
-name: face-recognition-api
+name: face-verification-api
 description: >-
-  Integrate and use @rajeevdesai/face-recognition-api — a browser-only 1:1 face
+  Integrate and use @rajeevdesai/face-verification-api — a browser-only 1:1 face
   verification library (MediaPipe FaceLandmarker → Umeyama align → facex_nano
   embedding → cosine distance + optional MiniFASNet liveness ensemble). Use when
   the user is adding face verification / face matching / "is this the same
@@ -11,7 +11,7 @@ description: >-
   this package. Browser-only — not for Node/SSR.
 ---
 
-# @rajeevdesai/face-recognition-api
+# @rajeevdesai/face-verification-api
 
 Browser-only **1:1 face verification**. Answers exactly one question: *"Is the
 face in image B the same person as the face in image A?"* — fully client-side,
@@ -34,12 +34,12 @@ Largest face is used per image. For the `current` image with multiple faces, the
 ## Public API (only these two functions + types)
 
 ```typescript
-import { loadModels, compareFaces, DEFAULT_THRESHOLD } from '@rajeevdesai/face-recognition-api';
+import { loadModels, compareFaces, DEFAULT_THRESHOLD } from '@rajeevdesai/face-verification-api';
 import type {
   CompareResult, CompareOptions, ModelConfig, FraudFlag,
   PreprocessConfig, RecognitionConfig, LivenessConfig,
   TensorLayout, ChannelOrder, DistanceMetric,
-} from '@rajeevdesai/face-recognition-api';
+} from '@rajeevdesai/face-verification-api';
 ```
 
 `DEFAULT_THRESHOLD === 0.5`. There is no other exported surface — `embed`,
@@ -125,10 +125,10 @@ interface CompareResult {
 ## Install
 
 ```bash
-npm install @rajeevdesai/face-recognition-api
+npm install @rajeevdesai/face-verification-api
 npm install onnxruntime-web @mediapipe/tasks-vision   # peer deps: ort >=1.17.0, tasks-vision >=0.10.0
 # weights NOT bundled — download straight into your served static dir:
-npx @rajeevdesai/face-recognition-api download public/models
+npx @rajeevdesai/face-verification-api download public/models
 ```
 
 The downloader (a `bin` shipped in the package, also `npm run download` from a

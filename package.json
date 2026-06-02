@@ -1,5 +1,5 @@
 {
-  "name": "@rajeevdesai/face-recognition-api",
+  "name": "@rajeevdesai/face-verification-api",
   "version": "0.1.0",
   "description": "Browser face verification library — custom pipeline (no wrapper libs)",
   "type": "module",
@@ -10,12 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rajeevdesai/face-recognition-api.git"
+    "url": "git+https://github.com/rajeevdesai/face-verification-api.git"
   },
   "bugs": {
-    "url": "https://github.com/rajeevdesai/face-recognition-api/issues"
+    "url": "https://github.com/rajeevdesai/face-verification-api/issues"
   },
-  "homepage": "https://github.com/rajeevdesai/face-recognition-api#readme",
+  "homepage": "https://github.com/rajeevdesai/face-verification-api#readme",
   "keywords": [
     "face-recognition",
     "face-verification",
@@ -34,17 +34,17 @@
     "node": ">=18"
   },
   "sideEffects": false,
-  "main": "dist/face-recognition-api.umd.cjs",
-  "module": "dist/face-recognition-api.js",
+  "main": "dist/face-verification-api.umd.cjs",
+  "module": "dist/face-verification-api.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/face-recognition-api.js",
-      "require": "./dist/face-recognition-api.umd.cjs"
+      "import": "./dist/face-verification-api.js",
+      "require": "./dist/face-verification-api.umd.cjs"
     }
   },
   "bin": {
-    "face-recognition-api": "bin/download.mjs"
+    "face-verification-api": "bin/download.mjs"
   },
   "files": [
     "dist",

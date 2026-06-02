@@ -30,7 +30,7 @@ Paste the full `CompareResult` (`match`, `confidence`, `flags`, `details`). Reda
 - Library version:
 - Browser + OS:
 - `onnxruntime-web` / `@mediapipe/tasks-vision` versions:
-- Models: downloaded via `npx @rajeevdesai/face-recognition-api download`? self-hosted? custom recognition model?
+- Models: downloaded via `npx @rajeevdesai/face-verification-api download`? self-hosted? custom recognition model?
 
 **Notes**
 Have you ruled out the documented [Open Risks](../../README.md#open-risks) (uncalibrated thresholds, print-only liveness)?

@@ -10,7 +10,7 @@ export default defineConfig(() => {
         name: 'FaceRecognition',
         formats: ['es', 'umd'],
         fileName: (format) =>
-          format === 'es' ? 'face-recognition-api.js' : 'face-recognition-api.umd.cjs',
+          format === 'es' ? 'face-verification-api.js' : 'face-verification-api.umd.cjs',
       },
       rollupOptions: {
         external: ['onnxruntime-web', '@mediapipe/tasks-vision'],

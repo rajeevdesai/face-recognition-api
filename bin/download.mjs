@@ -4,7 +4,7 @@
  * (default: ./public/models) — write straight to where your app serves static
  * files, never into node_modules.
  *
- *   npx @rajeevdesai/face-recognition-api download public/models
+ *   npx @rajeevdesai/face-verification-api download public/models
  *   npm run download -- public/models      # from a repo clone
  *
  * Weights are NOT bundled (license + size). All four are Apache-2.0; review
@@ -72,7 +72,7 @@ async function main() {
   const { help, dir } = parseArgs(process.argv);
   if (help) {
     console.log(
-      'Usage: npx @rajeevdesai/face-recognition-api download [dir]\n' +
+      'Usage: npx @rajeevdesai/face-verification-api download [dir]\n' +
         '  dir   destination directory for the weights (default: public/models)\n\n' +
         'Downloads 4 Apache-2.0 model files. Serve the directory over HTTP and pass\n' +
         'the paths to loadModels(). See NOTICE for attribution.',

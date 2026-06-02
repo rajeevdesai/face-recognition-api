@@ -28,16 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MiniFASNetV1SE (@4.0) to harden print detection; the downloader fetches both.
 - Test coverage gating: `npm run coverage` (v8) with enforced thresholds, wired
   into CI.
-- Cross-platform weights downloader CLI: `npx @rajeevdesai/face-recognition-api
+- Cross-platform weights downloader CLI: `npx @rajeevdesai/face-verification-api
   download <dir>` (also `npm run download`). Writes the four weights straight into
   a directory you choose — no bash, no `node_modules` copying.
-- Claude Code integration skill at `.claude/skills/face-recognition-api/` so
+- Claude Code integration skill at `.claude/skills/face-verification-api/` so
   consumers' Claude Code knows the API, config, gotchas, and calibration.
 
 ### Changed
 
 - `CompareResult.details.cosineDistance` renamed to `details.distance` (metric-agnostic).
-- Package renamed `@rajeevdesai/face-recognition` → `@rajeevdesai/face-recognition-api`
+- Package renamed `@rajeevdesai/face-recognition` → `@rajeevdesai/face-verification-api`
   to match the repository (never published, so no migration).
 - Replaced the bash `models/download.sh` with the cross-platform `bin` downloader
   above (works on Windows; single source for the weight URLs).
@@ -65,5 +65,5 @@ See [Open Risks](./README.md#open-risks). Notably: liveness rejects screen/video
 replay but does not reliably catch print attacks, and the default thresholds are
 uncalibrated placeholders.
 
-[Unreleased]: https://github.com/rajeevdesai/face-recognition-api/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/rajeevdesai/face-recognition-api/releases/tag/v0.1.0
+[Unreleased]: https://github.com/rajeevdesai/face-verification-api/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/rajeevdesai/face-verification-api/releases/tag/v0.1.0

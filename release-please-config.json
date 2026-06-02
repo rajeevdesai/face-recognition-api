@@ -3,7 +3,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "@rajeevdesai/face-recognition-api",
+      "package-name": "@rajeevdesai/face-verification-api",
       "changelog-path": "CHANGELOG.md",
       "include-component-in-tag": false
     }

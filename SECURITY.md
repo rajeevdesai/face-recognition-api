@@ -14,7 +14,7 @@ fixes. Pin a version and review the [CHANGELOG](./CHANGELOG.md) before upgrading
 
 **Do not open a public issue for security reports.**
 
-Report privately via GitHub's [Security Advisories](https://github.com/rajeevdesai/face-recognition-api/security/advisories/new)
+Report privately via GitHub's [Security Advisories](https://github.com/rajeevdesai/face-verification-api/security/advisories/new)
 (Security tab → "Report a vulnerability").
 
 Please include:

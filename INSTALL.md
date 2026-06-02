@@ -1,10 +1,10 @@
 # Installation Guide
 
-Step-by-step setup for adding `@rajeevdesai/face-recognition-api` to a browser app.
+Step-by-step setup for adding `@rajeevdesai/face-verification-api` to a browser app.
 
 > This library is **browser-only**. It needs `createImageBitmap`, `OffscreenCanvas`, and WebAssembly. It will not run under Node or server-side rendering.
 
-> 💡 **Using Claude Code?** This repo ships a Claude Code skill at [`.claude/skills/face-recognition-api/SKILL.md`](./.claude/skills/face-recognition-api/SKILL.md) — the full API, config, gotchas, and calibration in one file. Copy that directory into your own project's `.claude/skills/` and your Claude Code will know how to integrate this package.
+> 💡 **Using Claude Code?** This repo ships a Claude Code skill at [`.claude/skills/face-verification-api/SKILL.md`](./.claude/skills/face-verification-api/SKILL.md) — the full API, config, gotchas, and calibration in one file. Copy that directory into your own project's `.claude/skills/` and your Claude Code will know how to integrate this package.
 
 ## 1. Prerequisites
 
@@ -15,7 +15,7 @@ Step-by-step setup for adding `@rajeevdesai/face-recognition-api` to a browser a
 ## 2. Install packages
 
 ```bash
-npm install @rajeevdesai/face-recognition-api
+npm install @rajeevdesai/face-verification-api
 npm install onnxruntime-web @mediapipe/tasks-vision   # peer deps
 ```
 
@@ -28,7 +28,7 @@ fetches them straight into a directory you choose — point it at wherever you
 serve static assets (see step 4), e.g. `public/models`:
 
 ```bash
-npx @rajeevdesai/face-recognition-api download public/models
+npx @rajeevdesai/face-verification-api download public/models
 ```
 
 > Cloning the repo instead of installing from npm? Run `npm run download -- public/models`
@@ -49,7 +49,7 @@ This fetches four files:
 
 The browser fetches the model files at runtime, so they must be reachable over HTTP from your app. The downloader in step 3 already writes into your served directory — just point it at the right place:
 
-- **Vite / CRA:** `npx @rajeevdesai/face-recognition-api download public/models` → served at `/models/...`.
+- **Vite / CRA:** `npx @rajeevdesai/face-verification-api download public/models` → served at `/models/...`.
 - **Next.js:** same — `public/models/`, served at `/models/...`.
 - **Custom static host / CDN:** download to any directory, upload it anywhere reachable, and pass absolute URLs to `loadModels`.
 
@@ -88,7 +88,7 @@ Inference runs single-threaded (`numThreads = 1`), so you do **not** need `Cross
 ## 6. Verify the setup
 
 ```typescript
-import { loadModels, compareFaces } from '@rajeevdesai/face-recognition-api';
+import { loadModels, compareFaces } from '@rajeevdesai/face-verification-api';
 
 await loadModels({
   faceLandmarkerPath: '/models/face_landmarker.task',
