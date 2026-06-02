@@ -1,0 +1,45 @@
+name: Release
+
+# release-please watches main and keeps a "release PR" up to date from the
+# Conventional Commits since the last release (version bump + CHANGELOG). Merging
+# that PR creates the GitHub release + vX.Y.Z tag and, in the same run, publishes
+# to npm via OIDC trusted publishing (no stored token). Pushing code never
+# publishes — only merging the release PR does.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # create release commits, tags, GitHub releases
+  pull-requests: write # open/update the release PR
+  id-token: write # OIDC: npm trusted publishing + provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # The steps below run only when a release PR was just merged.
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
+      - uses: actions/setup-node@v6
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+      - name: Update npm (OIDC trusted publishing needs npm >= 11.5.1)
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm install -g npm@latest
+      - run: npm ci
+        if: ${{ steps.release.outputs.release_created }}
+      # prepublishOnly builds dist/. No NODE_AUTH_TOKEN — auth + provenance via OIDC.
+      - name: Publish to npm
+        if: ${{ steps.release.outputs.release_created }}
+        run: npm publish --provenance --access public
