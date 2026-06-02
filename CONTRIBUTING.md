@@ -67,22 +67,33 @@ Use only **CC0 or self-provided** images. Never commit scraped or third-party fa
 
 ## Releasing (maintainers)
 
-Published to npm as [`@rajeevdesai/face-recognition-api`](https://www.npmjs.com/package/@rajeevdesai/face-recognition-api) via the `Release` GitHub Action.
+Automated with [release-please](https://github.com/googleapis/release-please) +
+npm OIDC trusted publishing — no version bumping, no `NPM_TOKEN`, no tagging by hand.
 
-**One-time setup:** add an `NPM_TOKEN` repository secret — an npm **automation** token for the `@rajeevdesai` scope (Settings → Secrets and variables → Actions).
+**How it works:**
 
-**Each release:**
+1. Land Conventional Commits on `main` (`feat:` → minor, `fix:` → patch,
+   `feat!:`/`BREAKING CHANGE:` → major). Pushing code does **not** publish.
+2. `release-please` keeps a **release PR** open, maintaining the next version in
+   `package.json` + `.release-please-manifest.json` and the [CHANGELOG.md](./CHANGELOG.md)
+   from those commits. It updates as more commits land.
+3. **Merge the release PR** when you want to ship. That creates the `vX.Y.Z` tag
+   + GitHub release and, in the same workflow run, runs `npm publish --provenance`
+   via OIDC. Only `dist/` + `NOTICE` + the `bin/` downloader ship (the `files`
+   field); model weights are never bundled.
 
-1. Bump `version` in `package.json` (semver).
-2. Move the `[Unreleased]` notes in [CHANGELOG.md](./CHANGELOG.md) under the new version + date.
-3. Commit, then tag and push:
-   ```bash
-   git tag vX.Y.Z
-   git push origin main --tags
-   ```
-4. The tag triggers `.github/workflows/release.yml`: lint → type-check → test → `npm publish --provenance`. Only the built `dist/` + `NOTICE` + the `bin/` downloader ship (see the `files` field); model weights are never bundled.
+**One-time setup:**
 
-A manual `npm publish` also works — `prepublishOnly` builds first — but skips the CI gate and provenance. Prefer the tag.
+- **npm trusted publisher:** on npmjs.com → the package → Settings → Trusted
+  Publishing → add this repo and the `release-please.yml` workflow. (For the very
+  first publish, if the package doesn't exist yet, you may need a one-time
+  `npm publish` locally — or a temporary token — to create it, then OIDC handles
+  every release after.)
+- **Allow Actions to open PRs:** Settings → Actions → General → Workflow
+  permissions → enable "Allow GitHub Actions to create and approve pull requests"
+  (release-please opens the release PR).
+
+The release PR goes through the same `main` branch checks as any other PR.
 
 ## License of contributions
 
